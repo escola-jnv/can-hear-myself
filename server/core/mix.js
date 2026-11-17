@@ -10,7 +10,8 @@ class Mix {
   }
 
   auxState(aux) {
-    if (!this.state[aux]) this.state[aux] = { groups: {}, fixed: { master: 3, click: 2, talkback: 2 }, offsets: {} };
+    if (!this.state[aux]) this.state[aux] = { groups: {}, fixed: { master: 3, click: 2, talkback: 2 }, channels: {}, offsets: {} };
+    if (!this.state[aux].channels) this.state[aux].channels = {};
     return this.state[aux];
   }
 
@@ -40,11 +41,22 @@ class Mix {
     }
 
     st.groups[groupId] = step;
+    if (!st.channels) st.channels = {};
+    for (const ch of group.channels) st.channels[ch] = step;
     for (const t of targets) {
       const db = t.db === null ? null : Math.min(t.db, max);
       await this.driver.setAuxSend(aux, t.ch, db);
     }
     return { ok: true, group: groupId, step };
+  }
+
+  async setChannelLevel(aux, channel, step) {
+    const chDb = this.stepToDb(step);
+    const st = this.auxState(aux);
+    if (!st.channels) st.channels = {};
+    st.channels[channel] = step;
+    await this.driver.setAuxSend(aux, channel, chDb === null ? null : Math.min(chDb, this.config.maxDb));
+    return { ok: true, channel, step };
   }
 
   /** Ajuste fino: move só um canal, em passos de dB, dentro do grupo. */
@@ -72,8 +84,9 @@ class Mix {
   snapshot(aux) { return JSON.parse(JSON.stringify(this.auxState(aux))); }
 
   async apply(aux, snap) {
-    this.state[aux] = { groups: {}, fixed: {}, offsets: { ...(snap.offsets || {}) } };
+    this.state[aux] = { groups: {}, fixed: {}, channels: { ...(snap.channels || {}) }, offsets: { ...(snap.offsets || {}) } };
     for (const [g, s] of Object.entries(snap.groups || {})) await this.setGroupLevel(aux, g, s);
+    for (const [ch, s] of Object.entries(snap.channels || {})) await this.setChannelLevel(aux, Number(ch), s);
     for (const [t, s] of Object.entries(snap.fixed || {})) await this.setFixedLevel(aux, t, s);
   }
 }

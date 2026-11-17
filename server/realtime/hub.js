@@ -5,8 +5,9 @@ class Hub {
   constructor(server, onMessage) {
     this.wss = new WebSocketServer({ server });
     this.nextId = 1;
-    this.wss.on('connection', (ws) => {
+    this.wss.on('connection', (ws, req) => {
       ws.id = this.nextId++;
+      ws.userAgent = req && req.headers ? req.headers['user-agent'] : null;
       ws.on('message', (raw) => {
         let msg; try { msg = JSON.parse(raw); } catch { return; }
         onMessage(ws, msg).catch((err) => this.send(ws, { type: 'error', message: err.message }));

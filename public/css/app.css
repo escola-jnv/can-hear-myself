@@ -1,22 +1,495 @@
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;-webkit-tap-highlight-color:transparent}
-button{font:inherit;color:inherit;background:none;border:1.5px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer}
-.screen{display:none;padding:16px;min-height:100vh}.screen.on{display:block}
-h1{font-size:22px;font-weight:500;margin-bottom:16px}
-.list button{display:block;width:100%;text-align:left;margin-bottom:var(--gap);font-size:19px;background:var(--surface)}
-.list button.taken{opacity:.4}
-.top{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;z-index:2}
-.who{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.dot{font-size:13px;color:var(--ok)}.dot.off{color:var(--danger)}
-.song{border:1px solid var(--accent);border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;margin-bottom:8px}
-.song b{color:var(--accent);font-weight:500}
-.row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
-.row .name{display:flex;align-items:center;gap:8px;font-size:18px}
-.chip{width:12px;height:12px;border-radius:50%}
-.steps{display:flex;gap:6px}
-.steps button{width:38px;height:38px;border-radius:50%;padding:0;color:var(--text-2)}
-.steps button.on{color:var(--bg);border-color:transparent}
-.help{position:fixed;right:16px;bottom:16px;background:var(--danger);border:none;border-radius:999px;padding:12px 20px;font-size:17px}
-.sheet{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;z-index:5}.sheet.on{display:flex}
-.sheet .box{background:var(--surface);width:100%;padding:16px;border-radius:16px 16px 0 0}
-.warn{background:var(--danger);padding:10px 16px;display:none}.warn.on{display:block}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+button:active { transform: scale(0.98); }
+
+.screen { display: none; padding: 16px; min-height: 100vh; }
+.screen.on { display: block; }
+
+h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
+
+.list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  margin-bottom: var(--gap);
+  font-size: 19px;
+  background: var(--surface);
+}
+.list button.taken { opacity: .4; }
+
+.btn-primary {
+  background: var(--accent) !important;
+  color: var(--bg) !important;
+  border-color: var(--accent) !important;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-secondary {
+  background: var(--surface) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1.5px dashed var(--border-light);
+  font-size: 18px;
+  padding: 14px;
+}
+.list-actions { display: flex; flex-direction: column; gap: 8px; }
+
+/* Grade de Instrumentos */
+.instrument-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (min-width: 480px) {
+  .instrument-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.instrument-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+}
+.instrument-card:hover, .instrument-card:active {
+  border-color: var(--accent);
+  background: rgba(245, 165, 36, 0.08);
+}
+.instrument-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(245, 165, 36, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(245, 165, 36, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.instrument-card-icon svg { width: 24px; height: 24px; }
+.instrument-card-label { font-size: 18px; font-weight: 500; color: var(--text); }
+
+/* Header superior fixo */
+.top {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 8px;
+  z-index: 10;
+}
+
+.who {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.who-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.who-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.who-inst-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+}
+.who-inst-icon svg { width: 20px; height: 20px; }
+
+.who-name {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Conectado logo na frente do nome */
+.dot {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ok);
+  background: var(--ok-bg);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 999px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.dot.off {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.who-aux {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* Botão de ajuda no campo superior direito */
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--danger-bg);
+  color: #FCA5A5;
+  border: 1.5px solid rgba(239, 68, 68, 0.45);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.help-btn svg { width: 16px; height: 16px; }
+.help-btn:hover, .help-btn:active {
+  background: var(--danger);
+  color: #FFFFFF;
+}
+.help-btn.pending {
+  background: rgba(245, 165, 36, 0.2);
+  color: #FCD34D;
+  border-color: rgba(245, 165, 36, 0.5);
+}
+
+/* Caixa da música */
+.song {
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  background: rgba(245, 165, 36, 0.05);
+}
+.song-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.song-icon {
+  color: var(--accent);
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+.song b {
+  color: var(--accent);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Container de grupos e breadcrumb */
+.groups-container {
+  padding: 10px 16px 80px;
+}
+
+.breadcrumb-bar {
+  margin-bottom: 8px;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 15px;
+}
+.bc-link {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.bc-link:hover, .bc-link:active {
+  background: rgba(245, 165, 36, 0.15);
+}
+.bc-link svg { width: 16px; height: 16px; }
+.bc-sep {
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+}
+.bc-sep svg { width: 14px; height: 14px; }
+.bc-current {
+  color: var(--text);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bc-current svg { width: 16px; height: 16px; color: var(--accent); }
+
+/* Linhas de canais e passos de volume */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.row .name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  min-width: 0;
+  flex: 1;
+}
+.row .name.clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  transition: background 0.15s;
+}
+.row .name.clickable:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.icon-chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.icon-chip svg {
+  width: 20px;
+  height: 20px;
+}
+.chip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.name-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.label-text {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.row-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-2);
+}
+.row-chevron svg { width: 15px; height: 15px; }
+
+.steps {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.steps button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  padding: 0;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  font-weight: 600;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.steps button.on {
+  color: #0E1116;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+/* Peças individuais com variações da cor do instrumento */
+.piece-row {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 8px;
+  border-radius: 8px;
+  margin: 4px 0;
+  border-bottom: none;
+}
+.piece-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Modal de ajuda: popup bem no meio da tela */
+.sheet {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;     /* Centralizado verticalmente */
+  justify-content: center; /* Centralizado horizontalmente */
+  padding: 16px;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+.sheet.on { display: flex; }
+
+.sheet .box {
+  background: var(--surface);
+  width: 100%;
+  max-width: 420px;
+  padding: 24px 20px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.sheet h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.help-reason-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--surface-2) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.help-reason-btn:hover, .help-reason-btn:active {
+  border-color: var(--reason-color, var(--accent)) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  transform: translateX(3px);
+}
+
+.reason-icon-chip {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.reason-icon-chip svg { width: 20px; height: 20px; }
+.reason-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+.help-cancel-btn {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-2);
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+}
+.help-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.warn {
+  background: var(--danger);
+  padding: 10px 16px;
+  display: none;
+  font-weight: 500;
+  text-align: center;
+}
+.warn.on { display: block; }

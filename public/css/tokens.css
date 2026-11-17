@@ -1,7 +1,20 @@
 :root {
-  --bg: #0E1116; --surface: #171C24; --border: #2A313C;
-  --text: #F2F4F7; --text-2: #9AA4B2;
-  --accent: #F5A524; --danger: #EF4444; --ok: #22C55E;
-  --radius: 12px; --gap: 8px;
-  --font: 'Barlow Semi Condensed', system-ui, sans-serif;
+  --bg: #0E1116;
+  --surface: #171C24;
+  --surface-2: #212732;
+  --surface-hover: #29313E;
+  --border: #2A313C;
+  --border-light: #3D4654;
+  --text: #F2F4F7;
+  --text-2: #9AA4B2;
+  --accent: #F5A524;
+  --accent-light: #FBBF24;
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --ok: #22C55E;
+  --ok-bg: rgba(34, 197, 94, 0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --gap: 8px;
+  --font: 'Barlow Semi Condensed', system-ui, -apple-system, sans-serif;
 }

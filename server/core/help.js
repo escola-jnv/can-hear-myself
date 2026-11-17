@@ -3,7 +3,7 @@ const REASONS = {
   2: 'Problema no fone',
   3: 'Problema no instrumento ou microfone',
   4: 'Música ou clique errado',
-  5: 'Outro',
+  5: 'Vem Cá',
 };
 
 class Help {

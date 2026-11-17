@@ -101,8 +101,11 @@ async function build() {
 
   // 4. Injetar blob no binário do Node.js
   console.log('[4/5] Injetando código no executável do Node.js com postject...');
-  console.log(`  Fonte Node: ${process.execPath}`);
-  fs.copyFileSync(process.execPath, TEMP_EXE_FILE);
+  // CHM_NODE_BINARY permite gerar o .exe de Windows a partir de outra máquina
+  // (o node.exe precisa ser da MESMA versão do Node que gerou o blob).
+  const nodeBinary = process.env.CHM_NODE_BINARY || process.execPath;
+  console.log(`  Fonte Node: ${nodeBinary}`);
+  fs.copyFileSync(nodeBinary, TEMP_EXE_FILE);
 
   const blobData = fs.readFileSync(SEA_BLOB_FILE);
   await inject(TEMP_EXE_FILE, 'NODE_SEA_BLOB', blobData, {

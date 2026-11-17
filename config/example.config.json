@@ -1,6 +1,9 @@
 {
   "port": 3000,
-  "mixer": { "model": "mock", "ip": "10.10.1.1" },
+  "mixer": {
+    "model": "mock",
+    "ip": "10.10.1.1"
+  },
   "levels": [
     { "step": 0, "label": "Desligado", "db": null },
     { "step": 1, "label": "Baixo", "db": -20 },
@@ -11,38 +14,52 @@
   "maxDb": 0,
   "groupLimitBehavior": "stop",
   "auxes": [
-    { "id": 1, "name": "Aux 1" }, { "id": 2, "name": "Aux 2" },
-    { "id": 3, "name": "Aux 3" }, { "id": 4, "name": "Aux 4" }
+    { "id": 1, "name": "Aux 1" },
+    { "id": 2, "name": "Aux 2" },
+    { "id": 3, "name": "Aux 3" },
+    { "id": 4, "name": "Aux 4" }
   ],
   "groups": [
-    { "id": "bateria", "name": "Bateria", "color": "#F97316", "icon": "drum", "channels": [1, 2, 3, 4] },
-    { "id": "baixo", "name": "Baixo", "color": "#A855F7", "icon": "bass", "channels": [5] },
-    { "id": "guitarras", "name": "Guitarras", "color": "#EAB308", "icon": "guitar", "channels": [6, 7] },
-    { "id": "teclados", "name": "Teclados", "color": "#22C55E", "icon": "keys", "channels": [8, 9] },
-    { "id": "vozes", "name": "Vozes", "color": "#3B82F6", "icon": "mic", "channels": [10, 11, 12] },
-    { "id": "playback", "name": "Playback", "color": "#EC4899", "icon": "play", "channels": [13, 14] }
+    { "id": "baixo", "name": "Baixo", "color": "#A855F7", "icon": "bass", "channels": [1] },
+    { "id": "guitarras", "name": "Guitarras", "color": "#EAB308", "icon": "guitar", "channels": [2, 3] },
+    { "id": "violao", "name": "Violão", "color": "#F59E0B", "icon": "guitar", "channels": [6] },
+    { "id": "teclados", "name": "Teclados", "color": "#22C55E", "icon": "keys", "channels": [4, 5] },
+    { "id": "vozes", "name": "Vozes", "color": "#3B82F6", "icon": "mic", "channels": [8, 9, 10, 11, 12] },
+    { "id": "bateria", "name": "Bateria", "color": "#F97316", "icon": "drum", "channels": [13, 14, 15, 16, 17, 18, 19, 20] },
+    { "id": "playback", "name": "Playback / VS", "color": "#EC4899", "icon": "play", "channels": [22, 23] }
   ],
   "fixed": {
-    "click": { "name": "Clique", "channels": [15] },
-    "talkback": { "name": "Talkback", "channels": [16] }
+    "click": { "name": "Clique", "channels": [21] },
+    "talkback": { "name": "Talkback", "channels": [7] }
   },
   "channelNames": {
-    "1": "Bumbo",
-    "2": "Caixa",
-    "3": "Chimbal",
-    "4": "Over / Tons",
-    "5": "Baixo",
-    "6": "Guitarra 1",
-    "7": "Guitarra 2",
-    "8": "Teclado L",
-    "9": "Teclado R",
-    "10": "Voz Líder",
-    "11": "Backing 1",
-    "12": "Backing 2",
-    "13": "Playback L",
-    "14": "Playback R",
-    "15": "Clique",
-    "16": "Talkback"
+    "1": "BAIXO",
+    "2": "GTR L",
+    "3": "GTR R",
+    "4": "KEY L",
+    "5": "KEY R",
+    "6": "VIOLÃO",
+    "7": "TALKBACK",
+    "8": "mic SHURE",
+    "9": "mic DYLAN",
+    "10": "mic AZUL",
+    "11": "mic BRANCO",
+    "12": "MIC PASTOR",
+    "13": "KICK",
+    "14": "SNARE",
+    "15": "SNARE FX",
+    "16": "TOM 1",
+    "17": "TOM 2",
+    "18": "SURDO",
+    "19": "OH L",
+    "20": "OH R",
+    "21": "CLICK",
+    "22": "VS L",
+    "23": "VS R",
+    "24": "LIVRE"
   },
-  "proske": { "url": "https://app.proske.com.br", "enabled": false }
+  "proske": {
+    "url": "https://app.proske.com.br",
+    "enabled": false
+  }
 }

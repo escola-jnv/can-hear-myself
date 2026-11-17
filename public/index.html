@@ -11,26 +11,83 @@
 <body>
 <div id="offline" class="warn">Sem conexão com a mesa</div>
 
-<section id="s-person" class="screen"><h1>Quem é você?</h1><div class="list" id="people"></div>
-  <button id="new-person">+ Novo nome</button></section>
-<section id="s-instrument" class="screen"><h1>O que você está tocando?</h1><div class="list" id="instruments"></div></section>
-<section id="s-aux" class="screen"><h1>Qual saída?</h1><div class="list" id="auxes"></div></section>
-<section id="s-again" class="screen"><h1 id="again-text"></h1>
-  <div class="list"><button id="again-yes">Continuar</button><button id="again-no">Trocar</button></div></section>
+<section id="s-person" class="screen">
+  <h1>Quem é você?</h1>
+  <div class="list" id="people"></div>
+  <button id="new-person" class="btn-action">
+    <i data-lucide="user-plus"></i>
+    <span>+ Novo nome</span>
+  </button>
+</section>
+
+<section id="s-instrument" class="screen">
+  <h1>O que você está tocando?</h1>
+  <div class="instrument-grid" id="instruments"></div>
+</section>
+
+<section id="s-aux" class="screen">
+  <h1>Qual saída?</h1>
+  <div class="list" id="auxes"></div>
+</section>
+
+<section id="s-again" class="screen">
+  <h1 id="again-text"></h1>
+  <div class="list list-actions">
+    <button id="again-yes" class="btn-primary">
+      <i data-lucide="check"></i>
+      <span>Continuar</span>
+    </button>
+    <button id="again-no" class="btn-secondary">
+      <i data-lucide="refresh-cw"></i>
+      <span>Trocar</span>
+    </button>
+  </div>
+</section>
 
 <section id="s-mix" class="screen" style="padding:0">
   <div class="top">
-    <div class="who"><div><div id="who-name"></div><small id="who-aux" style="color:var(--text-2)"></small></div><span id="dot" class="dot">● Conectado</span></div>
-    <div class="song"><span id="song-name">Nenhuma música</span><b id="song-meta"></b></div>
+    <div class="who">
+      <div class="who-main">
+        <div class="who-title-line">
+          <span id="who-icon" class="who-inst-icon"></span>
+          <span id="who-name" class="who-name"></span>
+          <span id="dot" class="dot">● Conectado</span>
+        </div>
+        <small id="who-aux" class="who-aux"></small>
+      </div>
+      <button class="help-btn" id="help-btn" title="Pedir ajuda ao técnico">
+        <i data-lucide="circle-help"></i>
+        <span>Ajuda</span>
+      </button>
+    </div>
+
+    <div class="song">
+      <div class="song-title-box">
+        <i data-lucide="music-2" class="song-icon"></i>
+        <span id="song-name">Nenhuma música</span>
+      </div>
+      <b id="song-meta"></b>
+    </div>
+
     <div id="fixed"></div>
   </div>
-  <div id="groups" style="padding:8px 16px 80px"></div>
-  <button class="help" id="help-btn">Ajuda</button>
+
+  <div class="groups-container">
+    <div id="breadcrumb-bar" class="breadcrumb-bar"></div>
+    <div id="groups"></div>
+  </div>
 </section>
 
-<div class="sheet" id="help-sheet"><div class="box"><h1>O que aconteceu?</h1><div class="list" id="reasons"></div>
-  <button id="help-cancel">Cancelar</button></div></div>
+<div class="sheet" id="help-sheet">
+  <div class="box">
+    <h1>Precisa de ajuda?</h1>
+    <div class="help-grid" id="reasons"></div>
+    <button id="help-cancel" class="help-cancel-btn">Cancelar</button>
+  </div>
+</div>
 
+<script src="js/lucide.min.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/socket.js"></script>
 <script src="js/ui/level-row.js"></script>
 <script src="js/app.js"></script>

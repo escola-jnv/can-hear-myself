@@ -54,15 +54,37 @@ const setlist = new Setlist(store);
 let hub;
 const log = new ActivityLog(store, (line) => hub && hub.broadcast({ type: 'log', line }, (ws) => ws.role !== 'musician'));
 
+function isLocalRequest(req) {
+  const ip = (req.socket && req.socket.remoteAddress) || '';
+  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+}
+
+function buildStatus(req) {
+  const urls = localUrls();
+  const list = sessions.list();
+  return {
+    mixer: { model: config.mixer.model, ip: config.mixer.ip, connected: driver.connected },
+    port: config.port,
+    urls,
+    musicianUrls: urls.length ? urls : [`http://localhost:${config.port}`],
+    techUrls: (urls.length ? urls : [`http://localhost:${config.port}`]).map((u) => `${u}/tecnico.html`),
+    connectedCount: list.length,
+    sessions: list,
+    song: setlist.current,
+    help: help.open_(),
+    log: log.recent.slice(-100),
+    canEditConfig: req ? isLocalRequest(req) : false,
+  };
+}
+
 const server = http.createServer((req, res) => {
-  // CORS basico para desenvolvimento
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
   if (req.url === '/api/config') {
     if (req.method === 'POST') {
+      if (!isLocalRequest(req)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'O mapeamento só pode ser alterado no computador do servidor.' }));
+      }
       let body = '';
       req.on('data', (chunk) => { body += chunk; });
       req.on('end', () => {
@@ -115,7 +137,7 @@ const server = http.createServer((req, res) => {
   }
   if (req.url === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ mixer: { model: config.mixer.model, ip: config.mixer.ip, connected: driver.connected }, urls: localUrls(), sessions: sessions.list(), song: setlist.current, help: help.open_(), log: log.recent.slice(-50) }));
+    return res.end(JSON.stringify(buildStatus(req)));
   }
   const rel = req.url === '/' ? '/index.html' : decodeURIComponent(req.url.split('?')[0]);
   const publicDir = findPublicDir();
@@ -167,6 +189,13 @@ hub = new Hub(server, async (ws, msg) => {
       const r = await mix.setGroupLevel(who.aux, msg.group, Number(msg.step));
       if (r.ok) log.add({ person: who.person, action: 'nível do grupo', target: msg.group, value: r.step, aux: who.aux });
       return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who, warning: r.ok ? undefined : r.reason });
+    }
+    case 'setChannelLevel': {
+      if (!who) return;
+      const r = await mix.setChannelLevel(who.aux, Number(msg.channel), Number(msg.step));
+      const chName = (config.channelNames && config.channelNames[msg.channel]) || `canal ${msg.channel}`;
+      if (r.ok) log.add({ person: who.person, action: 'nível de canal', target: chName, value: r.step, aux: who.aux });
+      return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
     }
     case 'setFixedLevel':
       if (!who) return;
@@ -244,10 +273,33 @@ server.listen(config.port, async () => {
     }
   }
   console.log('==================================================\n');
+  openDashboard();
   try {
     await driver.connect();
   } catch (e) {
     console.error(`Falha ao conectar na mesa: ${e.message}`);
+  }
+});
+
+function openDashboard() {
+  if (process.argv.includes('--no-open') || process.env.CHM_NO_OPEN) return;
+  const url = `http://localhost:${config.port}/tecnico.html`;
+  const { exec } = require('child_process');
+  const cmd = process.platform === 'win32' ? `start "" "${url}"`
+    : process.platform === 'darwin' ? `open "${url}"` : `xdg-open "${url}"`;
+  exec(cmd, (err) => {
+    if (err) console.log(`Abra o painel do técnico no navegador: ${url}`);
+    else console.log(`Painel do técnico aberto: ${url}`);
+  });
+}
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`A porta ${config.port} já está em uso. O servidor provavelmente já está aberto.`);
+    openDashboard();
+    setTimeout(() => process.exit(1), 3000);
+  } else {
+    console.error(err);
   }
 });
 

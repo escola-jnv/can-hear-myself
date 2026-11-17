@@ -239,6 +239,13 @@
   .group-item:last-child, .aux-item:last-child {
     border-bottom: none;
   }
+  .server-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  .server-grid .label { font-size:13px; color:var(--text-2); margin-bottom:4px; }
+  .server-grid .url { font-size:16px; font-weight:600; color:var(--accent); word-break:break-all; }
+  .big-count { font-size:36px; font-weight:700; color:var(--accent); line-height:1; }
+  .people-list { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+  .people-list div { font-size:14px; padding:6px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+  .notice { font-size:14px; color:var(--accent); margin:0 16px 12px; }
 </style>
 </head>
 <body>
@@ -251,6 +258,7 @@
   <div id="status-pill" class="dot">● Conectando...</div>
 </header>
 
+<p id="readonly-notice" class="notice" style="display:none">Você está vendo o painel de outro aparelho. O mapeamento de canais só pode ser salvo no computador do servidor.</p>
 <nav class="tabs">
   <button id="tab-btn-monitor" class="tab-btn active" onclick="switchTab('monitor')">
     🔔 Monitoramento <span id="badge-requests" class="badge" style="display:none">0</span>
@@ -268,6 +276,18 @@
 
 <!-- ABA 1: MONITORAMENTO -->
 <main id="tab-monitor" class="tab-content active">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Servidor</h2>
+      <span id="mixer-info" style="font-size:14px;color:var(--text-2)"></span>
+    </div>
+    <div class="server-grid">
+      <div><div class="label">Músicos: abram no celular</div><div id="musician-urls" class="url">…</div></div>
+      <div><div class="label">Técnico</div><div id="tech-urls" class="url">…</div></div>
+      <div><div class="label">Pessoas conectadas</div><div id="connected-count" class="big-count">0</div></div>
+    </div>
+    <div id="people-list" class="people-list"></div>
+  </div>
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">Pedidos de ajuda</h2>
@@ -836,13 +856,44 @@ Socket.on('helpUpdate', function (m) {
   }
 });
 
-Socket.on('log', function (m) {
-  var l = m.line;
+function formatTime(iso) {
+  var d = new Date(iso);
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addLogLine(l) {
   var d = document.createElement('div');
-  d.textContent = l.at.slice(11, 16) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
+  d.textContent = formatTime(l.at) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
   var log = document.getElementById('log');
   log.insertBefore(d, log.firstChild);
-});
+}
+
+Socket.on('log', function (m) { addLogLine(m.line); });
+
+var historyLoaded = false;
+function refreshStatus() {
+  fetch('/api/status')
+    .then(function (r) { return r.json(); })
+    .then(function (s) {
+      document.getElementById('musician-urls').innerHTML = s.musicianUrls.join('<br>');
+      document.getElementById('tech-urls').innerHTML = s.techUrls.join('<br>');
+      document.getElementById('connected-count').textContent = s.connectedCount;
+      document.getElementById('people-list').innerHTML = s.sessions.map(function (p) {
+        return '<div>' + p.person + ' · ' + p.instrument + ' · Aux ' + p.aux + '</div>';
+      }).join('');
+      document.getElementById('mixer-info').textContent = 'Mesa: ' + s.mixer.model + ' · ' + s.mixer.ip;
+      document.getElementById('readonly-notice').style.display = s.canEditConfig ? 'none' : 'block';
+      if (!historyLoaded) {
+        historyLoaded = true;
+        (s.help || []).forEach(function (r) { reqs[r.id] = r; });
+        renderHelpRequests();
+        (s.log || []).forEach(addLogLine);
+      }
+    })
+    .catch(function () {});
+}
+refreshStatus();
+setInterval(refreshStatus, 3000);
 
 Socket.on('mixer', function (m) {
   var pill = document.getElementById('status-pill');
