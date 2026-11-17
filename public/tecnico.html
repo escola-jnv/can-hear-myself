@@ -914,7 +914,7 @@
       🔔 Monitoramento <span id="badge-requests" class="badge" style="display:none">0</span>
     </button>
     <button id="tab-btn-channels" class="tab-btn" onclick="switchTab('channels')">
-      🎛️ Canais & Instrumentos
+      🎛️ Canais
     </button>
     <button id="tab-btn-groups" class="tab-btn" onclick="switchTab('groups')">
       🏷️ Grupos
@@ -1113,7 +1113,7 @@
   </div>
 </main>
 
-<!-- ABA 2: CANAIS & INSTRUMENTOS -->
+<!-- ABA 2: CANAIS -->
 <main id="tab-channels" class="tab-content">
   <div class="toolbar">
     <div style="display:flex;align-items:center;gap:8px">
@@ -1132,16 +1132,16 @@
   </div>
 
   <p style="font-size:14px;color:var(--text-2);margin-bottom:12px">
-    Mapeie cada canal físico da mesa para o respectivo instrumento e escolha a qual grupo ele pertence no aplicativo dos músicos.
+    Defina o nome de cada canal físico da mesa. A organização dos canais nos grupos é configurada na aba Grupos.
   </p>
 
   <table class="channel-table">
     <thead>
       <tr>
-        <th>Canal</th>
+        <th style="width:70px">Canal</th>
         <th>Nome do Instrumento</th>
-        <th>Grupo / Destino</th>
-        <th></th>
+        <th style="width:200px">Grupo</th>
+        <th style="width:40px"></th>
       </tr>
     </thead>
     <tbody id="channel-rows">
@@ -1230,7 +1230,7 @@
           <div class="config-opt-left">
             <input type="checkbox" id="export-opt-canais" class="config-checkbox" checked onchange="onExportItemToggle()">
             <div>
-              <div class="config-opt-label">🎛️ Canais & Instrumentos</div>
+              <div class="config-opt-label">🎛️ Canais</div>
               <div class="config-opt-desc">Nomes dos instrumentos, canais de clique e talkback</div>
             </div>
           </div>
@@ -1332,7 +1332,7 @@
             <div class="config-opt-left">
               <input type="checkbox" id="import-opt-canais" class="config-checkbox" checked onchange="onImportItemToggle()">
               <div>
-                <div class="config-opt-label">🎛️ Canais & Instrumentos</div>
+                <div class="config-opt-label">🎛️ Canais</div>
                 <div class="config-opt-desc">Substitui nomes de instrumentos, clique e talkback</div>
               </div>
             </div>
@@ -1494,10 +1494,10 @@ function renderChannelsTable() {
     var tr = document.createElement('tr');
     tr.className = 'channel-row';
 
-    // Coluna Canal
+    // Coluna Canal: apenas o número (sem repetir CH)
     var tdCh = document.createElement('td');
-    var chLabel = ch < 10 ? 'CH 0' + ch : 'CH ' + ch;
-    tdCh.innerHTML = '<span class="ch-pill">' + chLabel + '</span>';
+    var chNum = ch < 10 ? '0' + ch : '' + ch;
+    tdCh.innerHTML = '<span class="ch-pill">' + chNum + '</span>';
     tr.appendChild(tdCh);
 
     // Coluna Nome do Instrumento
@@ -1516,62 +1516,57 @@ function renderChannelsTable() {
     tdName.appendChild(inputName);
     tr.appendChild(tdName);
 
-    // Coluna Grupo / Destino
+    // Coluna Grupo: apenas exibe para qual grupo o canal está indo (configuração feita na aba Grupos)
     var tdGroup = document.createElement('td');
-    var selectGroup = document.createElement('select');
-    selectGroup.style.width = '100%';
-
-    var optNone = document.createElement('option');
-    optNone.value = 'none';
-    optNone.textContent = '— Sem Grupo (Desativado) —';
-    selectGroup.appendChild(optNone);
-
-    (currentConfig.groups || []).forEach(function (g) {
-      var opt = document.createElement('option');
-      opt.value = 'group:' + g.id;
-      opt.textContent = 'Grupo: ' + g.name;
-      selectGroup.appendChild(opt);
-    });
-
-    var optClick = document.createElement('option');
-    optClick.value = 'fixed:click';
-    optClick.textContent = 'Fixo: Clique (Metrônomo)';
-    selectGroup.appendChild(optClick);
-
-    var optTalk = document.createElement('option');
-    optTalk.value = 'fixed:talkback';
-    optTalk.textContent = 'Fixo: Talkback';
-    selectGroup.appendChild(optTalk);
-
     var currentAssigned = getChannelAssignment(ch);
     if (currentAssigned.type === 'group') {
-      selectGroup.value = 'group:' + currentAssigned.id;
+      var pill = document.createElement('span');
+      pill.style.display = 'inline-flex';
+      pill.style.alignItems = 'center';
+      pill.style.gap = '6px';
+      pill.style.padding = '4px 10px';
+      pill.style.borderRadius = '6px';
+      pill.style.fontSize = '13px';
+      pill.style.fontWeight = '600';
+      pill.style.backgroundColor = currentAssigned.color ? (currentAssigned.color + '22') : 'rgba(59, 130, 246, 0.15)';
+      pill.style.color = currentAssigned.color || '#3B82F6';
+      pill.style.border = '1px solid ' + (currentAssigned.color ? (currentAssigned.color + '55') : 'rgba(59, 130, 246, 0.3)');
+      pill.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + (currentAssigned.color || '#3B82F6') + ';display:inline-block"></span>' + currentAssigned.name;
+      tdGroup.appendChild(pill);
     } else if (currentAssigned.type === 'fixed') {
-      selectGroup.value = 'fixed:' + currentAssigned.id;
+      var pillFixed = document.createElement('span');
+      pillFixed.style.display = 'inline-flex';
+      pillFixed.style.alignItems = 'center';
+      pillFixed.style.gap = '6px';
+      pillFixed.style.padding = '4px 10px';
+      pillFixed.style.borderRadius = '6px';
+      pillFixed.style.fontSize = '13px';
+      pillFixed.style.fontWeight = '600';
+      pillFixed.style.backgroundColor = 'rgba(148, 163, 184, 0.15)';
+      pillFixed.style.color = '#94A3B8';
+      pillFixed.style.border = '1px solid rgba(148, 163, 184, 0.3)';
+      pillFixed.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#94A3B8;display:inline-block"></span>' + currentAssigned.name + ' (Fixo)';
+      tdGroup.appendChild(pillFixed);
     } else {
-      selectGroup.value = 'none';
+      var emptySpan = document.createElement('span');
+      emptySpan.style.color = 'var(--text-2)';
+      emptySpan.style.fontSize = '13px';
+      emptySpan.textContent = '— Sem grupo';
+      tdGroup.appendChild(emptySpan);
     }
-
-    selectGroup.onchange = function () {
-      setChannelTarget(ch, selectGroup.value);
-      triggerAutoSave();
-    };
-
-    tdGroup.appendChild(selectGroup);
     tr.appendChild(tdGroup);
 
-    // Coluna Limpar
+    // Coluna Limpar Nome
     var tdActions = document.createElement('td');
     var btnClear = document.createElement('button');
     btnClear.className = 'btn';
     btnClear.style.padding = '6px 8px';
     btnClear.style.fontSize = '12px';
     btnClear.textContent = '✕';
-    btnClear.title = 'Desvincular canal';
+    btnClear.title = 'Limpar nome do canal';
     btnClear.onclick = function () {
       delete currentConfig.channelNames[ch];
-      setChannelTarget(ch, 'none');
-      renderChannelsTable();
+      inputName.value = '';
       triggerAutoSave();
     };
     tdActions.appendChild(btnClear);
@@ -1622,6 +1617,19 @@ function setChannelTarget(ch, targetValue) {
   renderGroupsList();
 }
 
+function parseChannels(str) {
+  if (!str) return [];
+  var seen = {};
+  return str.split(/[,;\s]+/)
+    .map(function (s) { return parseInt(s.trim(), 10); })
+    .filter(function (n) {
+      if (isNaN(n) || n <= 0 || seen[n]) return false;
+      seen[n] = true;
+      return true;
+    })
+    .sort(function (a, b) { return a - b; });
+}
+
 function renderGroupsList() {
   var el = document.getElementById('groups-list');
   el.innerHTML = '';
@@ -1633,7 +1641,11 @@ function renderGroupsList() {
     colorInput.type = 'color';
     colorInput.value = g.color || '#3B82F6';
     colorInput.title = 'Cor do grupo';
-    colorInput.onchange = function () { g.color = colorInput.value; triggerAutoSave(); };
+    colorInput.onchange = function () {
+      g.color = colorInput.value;
+      renderChannelsTable();
+      triggerAutoSave();
+    };
     div.appendChild(colorInput);
 
     var nameInput = document.createElement('input');
@@ -1648,13 +1660,38 @@ function renderGroupsList() {
     };
     div.appendChild(nameInput);
 
-    var chBadge = document.createElement('span');
-    chBadge.style.fontSize = '13px';
-    chBadge.style.color = 'var(--text-2)';
-    chBadge.style.minWidth = '140px';
-    var chList = (g.channels || []).join(', ');
-    chBadge.textContent = g.channels && g.channels.length ? 'Canais: ' + chList : 'Nenhum canal';
-    div.appendChild(chBadge);
+    var chInputWrap = document.createElement('div');
+    chInputWrap.style.display = 'flex';
+    chInputWrap.style.alignItems = 'center';
+    chInputWrap.style.gap = '8px';
+
+    var chLabel = document.createElement('span');
+    chLabel.style.fontSize = '13px';
+    chLabel.style.color = 'var(--text-2)';
+    chLabel.style.whiteSpace = 'nowrap';
+    chLabel.textContent = 'Canais:';
+    chInputWrap.appendChild(chLabel);
+
+    var chInput = document.createElement('input');
+    chInput.type = 'text';
+    chInput.value = (g.channels || []).join(', ');
+    chInput.placeholder = 'Ex: 13, 14, 15';
+    chInput.style.width = '160px';
+    chInput.title = 'Números dos canais pertencentes a este grupo (separados por vírgula)';
+    chInput.onchange = function () {
+      var newChannels = parseChannels(chInput.value);
+      (currentConfig.groups || []).forEach(function (otherG) {
+        if (otherG !== g && otherG.channels) {
+          otherG.channels = otherG.channels.filter(function (c) { return newChannels.indexOf(c) === -1; });
+        }
+      });
+      g.channels = newChannels;
+      renderGroupsList();
+      renderChannelsTable();
+      triggerAutoSave();
+    };
+    chInputWrap.appendChild(chInput);
+    div.appendChild(chInputWrap);
 
     var btnDel = document.createElement('button');
     btnDel.className = 'btn btn-danger';
@@ -1700,11 +1737,6 @@ function renderFixedInputs() {
 }
 
 function updateFixedFromInputs() {
-  var parseChannels = function (str) {
-    return str.split(',')
-      .map(function (s) { return parseInt(s.trim(), 10); })
-      .filter(function (n) { return !isNaN(n) && n > 0; });
-  };
   if (!currentConfig.fixed) currentConfig.fixed = {};
   currentConfig.fixed.click = { name: 'Clique', channels: parseChannels(document.getElementById('fixed-click-channels').value) };
   currentConfig.fixed.talkback = { name: 'Talkback', channels: parseChannels(document.getElementById('fixed-talkback-channels').value) };
