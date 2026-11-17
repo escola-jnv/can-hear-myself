@@ -447,7 +447,11 @@ function localUrls() {
   return urls;
 }
 
-if (require.main === module) {
+const isRunningDirectly = require.main === module
+  || (typeof process.isSea === 'function' && process.isSea())
+  || (!require.main && !process.argv.some((a) => a.includes('test')));
+
+if (isRunningDirectly) {
   server.listen(config.port, async () => {
     console.log('==================================================');
     console.log('  Can Hear Myself - Servidor Local');

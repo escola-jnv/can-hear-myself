@@ -6,11 +6,20 @@ Cada músico controla a própria mix de fone pelo celular. Servidor local no PC 
 
 Você pode rodar diretamente o executável independente (com Node embutido, sem precisar ter Node instalado no PC da igreja):
 
-```bash
-.\can-hear-myself.exe
-```
+- **Aplicativo Desktop (recomendado para o usuário)**:
+  Basta dar dois cliques em `can-hear-myself.exe`.
+  - **Zero terminal preto**: não assusta o usuário com telas de comando.
+  - **Node embutido**: roda em segundo plano mesmo sem Node.js instalado na máquina.
+  - **Janela Web App dedicada**: abre direto a janela do aplicativo sem barras de navegação ou abas.
+  - **Encerramento limpo**: ao fechar a janela no "X", o servidor em segundo plano fecha automaticamente.
 
-Para gerar novamente o `.exe`:
+- **Modo Terminal / CLI (para depuração)**:
+  Se quiser ver os logs em tempo real no prompt de comando:
+  ```bash
+  .\can-hear-myself-cli.exe --port 3000 --mixer ui24r
+  ```
+
+Para gerar novamente os executáveis:
 ```bash
 npm run build:exe
 ```

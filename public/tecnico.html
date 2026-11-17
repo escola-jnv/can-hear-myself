@@ -1089,6 +1089,7 @@ function renderChannelsTable() {
       var val = inputName.value.trim();
       if (val) currentConfig.channelNames[ch] = val;
       else delete currentConfig.channelNames[ch];
+      triggerAutoSave();
     };
     tdName.appendChild(inputName);
     tr.appendChild(tdName);
@@ -1131,6 +1132,7 @@ function renderChannelsTable() {
 
     selectGroup.onchange = function () {
       setChannelTarget(ch, selectGroup.value);
+      triggerAutoSave();
     };
 
     tdGroup.appendChild(selectGroup);
@@ -1148,6 +1150,7 @@ function renderChannelsTable() {
       delete currentConfig.channelNames[ch];
       setChannelTarget(ch, 'none');
       renderChannelsTable();
+      triggerAutoSave();
     };
     tdActions.appendChild(btnClear);
     tr.appendChild(tdActions);
@@ -1208,7 +1211,7 @@ function renderGroupsList() {
     colorInput.type = 'color';
     colorInput.value = g.color || '#3B82F6';
     colorInput.title = 'Cor do grupo';
-    colorInput.onchange = function () { g.color = colorInput.value; };
+    colorInput.onchange = function () { g.color = colorInput.value; triggerAutoSave(); };
     div.appendChild(colorInput);
 
     var nameInput = document.createElement('input');
@@ -1219,6 +1222,7 @@ function renderGroupsList() {
     nameInput.onchange = function () {
       g.name = nameInput.value.trim();
       renderChannelsTable();
+      triggerAutoSave();
     };
     div.appendChild(nameInput);
 
@@ -1238,6 +1242,7 @@ function renderGroupsList() {
         currentConfig.groups.splice(idx, 1);
         renderGroupsList();
         renderChannelsTable();
+        triggerAutoSave();
       }
     };
     div.appendChild(btnDel);
@@ -1258,6 +1263,7 @@ function addNewGroup() {
   });
   renderGroupsList();
   renderChannelsTable();
+  triggerAutoSave();
 }
 
 function renderFixedInputs() {
@@ -1281,6 +1287,7 @@ function updateFixedFromInputs() {
   currentConfig.fixed.click = { name: 'Clique', channels: parseChannels(document.getElementById('fixed-click-channels').value) };
   currentConfig.fixed.talkback = { name: 'Talkback', channels: parseChannels(document.getElementById('fixed-talkback-channels').value) };
   renderChannelsTable();
+  triggerAutoSave();
 }
 
 function renderAuxesList() {
@@ -1302,6 +1309,7 @@ function renderAuxesList() {
     nameInput.placeholder = 'Nome da saída (Ex: Fone Bateria)';
     nameInput.onchange = function () {
       a.name = nameInput.value.trim();
+      triggerAutoSave();
     };
     div.appendChild(nameInput);
 
@@ -1312,6 +1320,7 @@ function renderAuxesList() {
       if (confirm('Deseja excluir a ' + a.name + '?')) {
         currentConfig.auxes.splice(idx, 1);
         renderAuxesList();
+        triggerAutoSave();
       }
     };
     div.appendChild(btnDel);
@@ -1330,6 +1339,7 @@ function addNewAux() {
   if (!currentConfig.auxes) currentConfig.auxes = [];
   currentConfig.auxes.push({ id: nextId, name: name });
   renderAuxesList();
+  triggerAutoSave();
 }
 
 function changeChannelCount(cnt) {
@@ -1348,34 +1358,581 @@ function addCustomChannel() {
   renderChannelsTable();
 }
 
-function saveAllConfig() {
+function saveAllConfig(callback) {
   var statusEl = document.getElementById('save-status');
-  statusEl.style.color = 'var(--accent)';
-  statusEl.textContent = 'Salvando configurações...';
+  if (statusEl) {
+    statusEl.style.display = 'inline-block';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.textContent = '💾 Salvando...';
+  }
 
-  fetch('/api/config', {
+  return fetch('/api/config', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(currentConfig)
   })
   .then(function (res) { return res.json(); })
   .then(function (data) {
-    if (data.ok) {
-      statusEl.style.color = 'var(--ok)';
-      var now = new Date();
-      var timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      statusEl.textContent = '✅ Configurações salvas e aplicadas às ' + timeStr;
-      setTimeout(function () {
-        if (statusEl.textContent.indexOf('✅') !== -1) statusEl.textContent = '';
-      }, 5000);
-    } else {
-      statusEl.style.color = 'var(--danger)';
-      statusEl.textContent = '❌ Erro ao salvar: ' + (data.error || 'Erro desconhecido');
+    if (statusEl) {
+      if (data.ok) {
+        statusEl.style.color = 'var(--ok)';
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        statusEl.textContent = '✅ Salvo às ' + timeStr;
+        setTimeout(function () {
+          if (statusEl.textContent.indexOf('✅') !== -1) {
+            statusEl.style.display = 'none';
+            statusEl.textContent = '';
+          }
+        }, 4000);
+      } else {
+        statusEl.style.color = 'var(--danger)';
+        statusEl.textContent = '❌ Erro ao salvar: ' + (data.error || 'Erro desconhecido');
+      }
     }
+    if (typeof callback === 'function') callback(data);
+    return data;
   })
   .catch(function (err) {
-    statusEl.style.color = 'var(--danger)';
-    statusEl.textContent = '❌ Erro de conexão ao salvar: ' + err.message;
+    if (statusEl) {
+      statusEl.style.color = 'var(--danger)';
+      statusEl.textContent = '❌ Erro de conexão ao salvar: ' + err.message;
+    }
+    if (typeof callback === 'function') callback({ ok: false, error: err.message });
+  });
+}
+
+// --------------------------------------------------------------------------
+// EXPORTAÇÃO & IMPORTAÇÃO DE CONFIGURAÇÕES (JSON)
+// --------------------------------------------------------------------------
+function openExportModal() {
+  var chCount = Object.keys(currentConfig.channelNames || {}).length;
+  var grpCount = (currentConfig.groups || []).length;
+  var sngCount = (currentSongs || []).length;
+  var auxCount = (currentConfig.auxes || []).length;
+
+  var elCh = document.getElementById('export-count-canais');
+  var elGrp = document.getElementById('export-count-grupos');
+  var elSng = document.getElementById('export-count-musicas');
+  var elAux = document.getElementById('export-count-aux');
+
+  if (elCh) elCh.textContent = chCount + (chCount === 1 ? ' canal mapeado' : ' canais mapeados');
+  if (elGrp) elGrp.textContent = grpCount + (grpCount === 1 ? ' grupo' : ' grupos');
+  if (elSng) elSng.textContent = sngCount + (sngCount === 1 ? ' música' : ' músicas');
+  if (elAux) elAux.textContent = auxCount + (auxCount === 1 ? ' saída aux' : ' saídas aux');
+
+  // Por padrão marca TUDO
+  document.getElementById('export-opt-tudo').checked = true;
+  document.getElementById('export-opt-canais').checked = true;
+  document.getElementById('export-opt-grupos').checked = true;
+  document.getElementById('export-opt-musicas').checked = true;
+  document.getElementById('export-opt-aux').checked = true;
+
+  updateExportSelectionStyles();
+  var modal = document.getElementById('export-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeExportModal() {
+  var modal = document.getElementById('export-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function onExportTudoToggle() {
+  var tudo = document.getElementById('export-opt-tudo').checked;
+  document.getElementById('export-opt-canais').checked = tudo;
+  document.getElementById('export-opt-grupos').checked = tudo;
+  document.getElementById('export-opt-musicas').checked = tudo;
+  document.getElementById('export-opt-aux').checked = tudo;
+  updateExportSelectionStyles();
+}
+
+function onExportItemToggle() {
+  var canais = document.getElementById('export-opt-canais').checked;
+  var grupos = document.getElementById('export-opt-grupos').checked;
+  var musicas = document.getElementById('export-opt-musicas').checked;
+  var aux = document.getElementById('export-opt-aux').checked;
+
+  document.getElementById('export-opt-tudo').checked = canais && grupos && musicas && aux;
+  updateExportSelectionStyles();
+}
+
+function updateExportSelectionStyles() {
+  var items = ['tudo', 'canais', 'grupos', 'musicas', 'aux'];
+  var anyChecked = false;
+  items.forEach(function (id) {
+    var cb = document.getElementById('export-opt-' + id);
+    if (!cb) return;
+    var parent = cb.closest('.config-opt-item');
+    if (cb.checked) {
+      if (parent) parent.classList.add('checked');
+      if (id !== 'tudo') anyChecked = true;
+    } else {
+      if (parent) parent.classList.remove('checked');
+    }
+  });
+
+  var btn = document.getElementById('btn-execute-export');
+  var copyBtn = document.getElementById('btn-copy-export');
+  if (btn) btn.disabled = !anyChecked;
+  if (copyBtn) copyBtn.disabled = !anyChecked;
+}
+
+function generateExportData() {
+  var includeChannels = document.getElementById('export-opt-canais').checked;
+  var includeGroups = document.getElementById('export-opt-grupos').checked;
+  var includeSongs = document.getElementById('export-opt-musicas').checked;
+  var includeAuxes = document.getElementById('export-opt-aux').checked;
+
+  var selectedList = [];
+  if (includeChannels) selectedList.push('canais');
+  if (includeGroups) selectedList.push('grupos');
+  if (includeSongs) selectedList.push('musicas');
+  if (includeAuxes) selectedList.push('aux');
+
+  var all = includeChannels && includeGroups && includeSongs && includeAuxes;
+  var exportObj = {
+    app: 'can-hear-myself',
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    selection: all ? ['tudo'] : selectedList
+  };
+
+  if (includeChannels) {
+    exportObj.channelNames = JSON.parse(JSON.stringify(currentConfig.channelNames || {}));
+    if (currentConfig.fixed) {
+      exportObj.fixed = JSON.parse(JSON.stringify(currentConfig.fixed));
+    }
+  }
+
+  if (includeGroups) {
+    exportObj.groups = JSON.parse(JSON.stringify(currentConfig.groups || []));
+  }
+
+  if (includeAuxes) {
+    exportObj.auxes = JSON.parse(JSON.stringify(currentConfig.auxes || []));
+  }
+
+  if (includeSongs) {
+    exportObj.songs = JSON.parse(JSON.stringify(currentSongs || []));
+  }
+
+  return {
+    data: exportObj,
+    selectedList: selectedList,
+    all: all
+  };
+}
+
+function executeExport() {
+  var res = generateExportData();
+  if (res.selectedList.length === 0) {
+    alert('Selecione pelo menos um item para exportar.');
+    return;
+  }
+  var jsonStr = JSON.stringify(res.data, null, 2);
+  var today = new Date().toISOString().slice(0, 10);
+  var tag = res.all ? 'tudo' : res.selectedList.join('-');
+  var filename = 'chm-config-' + tag + '-' + today + '.json';
+
+  var blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  closeExportModal();
+
+  var statusEl = document.getElementById('save-status');
+  if (statusEl) {
+    statusEl.style.display = 'inline-block';
+    statusEl.style.color = 'var(--ok)';
+    statusEl.textContent = '✅ Exportado: ' + filename;
+    setTimeout(function () {
+      if (statusEl.textContent.indexOf('Exportado') !== -1) {
+        statusEl.style.display = 'none';
+        statusEl.textContent = '';
+      }
+    }, 4000);
+  }
+}
+
+function copyExportJSON() {
+  var res = generateExportData();
+  if (res.selectedList.length === 0) return;
+  var jsonStr = JSON.stringify(res.data, null, 2);
+  var btn = document.getElementById('btn-copy-export');
+  var origText = btn ? btn.textContent : '';
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(jsonStr).then(function () {
+      if (btn) btn.textContent = '📋 Copiado!';
+      setTimeout(function () { if (btn) btn.textContent = origText; }, 2000);
+    }).catch(function () {
+      fallbackCopyText(jsonStr, btn, origText);
+    });
+  } else {
+    fallbackCopyText(jsonStr, btn, origText);
+  }
+}
+
+function fallbackCopyText(text, btn, origText) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  if (btn) btn.textContent = '📋 Copiado!';
+  setTimeout(function () { if (btn) btn.textContent = origText; }, 2000);
+}
+
+// --------------------------------------------------------------------------
+// IMPORTAÇÃO DE CONFIGURAÇÕES (JSON)
+// --------------------------------------------------------------------------
+var parsedImportData = null;
+
+function openImportModal() {
+  parsedImportData = null;
+  var fileInput = document.getElementById('import-file-input');
+  if (fileInput) fileInput.value = '';
+  var textInput = document.getElementById('import-json-text');
+  if (textInput) {
+    textInput.value = '';
+    textInput.style.display = 'none';
+  }
+  var fileNameEl = document.getElementById('import-file-name');
+  if (fileNameEl) fileNameEl.textContent = '';
+  var statusBox = document.getElementById('import-parse-status');
+  if (statusBox) {
+    statusBox.textContent = '';
+    statusBox.style.display = 'none';
+  }
+  var previewBox = document.getElementById('import-detected-box');
+  if (previewBox) previewBox.style.display = 'none';
+  var confirmBtn = document.getElementById('btn-confirm-import');
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  var modal = document.getElementById('import-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeImportModal() {
+  var modal = document.getElementById('import-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function toggleImportTextarea() {
+  var ta = document.getElementById('import-json-text');
+  if (!ta) return;
+  if (ta.style.display === 'none') {
+    ta.style.display = 'block';
+    ta.focus();
+  } else {
+    ta.style.display = 'none';
+  }
+}
+
+function handleImportFileSelect(e) {
+  var file = e.target.files && e.target.files[0];
+  if (file) handleImportFile(file);
+}
+
+function handleImportFile(file) {
+  var fileNameEl = document.getElementById('import-file-name');
+  if (fileNameEl) fileNameEl.textContent = 'Arquivo: ' + file.name;
+
+  var reader = new FileReader();
+  reader.onload = function (evt) {
+    processImportJSON(evt.target.result, file.name);
+  };
+  reader.onerror = function () {
+    var statusBox = document.getElementById('import-parse-status');
+    if (statusBox) {
+      statusBox.style.display = 'block';
+      statusBox.style.color = 'var(--danger)';
+      statusBox.textContent = '❌ Erro ao ler o arquivo.';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function handleImportTextChange() {
+  var ta = document.getElementById('import-json-text');
+  if (!ta) return;
+  var val = ta.value.trim();
+  if (val) {
+    processImportJSON(val, 'texto colado');
+  } else {
+    parsedImportData = null;
+    var previewBox = document.getElementById('import-detected-box');
+    if (previewBox) previewBox.style.display = 'none';
+    var statusBox = document.getElementById('import-parse-status');
+    if (statusBox) statusBox.style.display = 'none';
+    var confirmBtn = document.getElementById('btn-confirm-import');
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+}
+
+function processImportJSON(rawText, sourceName) {
+  var statusBox = document.getElementById('import-parse-status');
+  var previewBox = document.getElementById('import-detected-box');
+  var confirmBtn = document.getElementById('btn-confirm-import');
+
+  try {
+    parsedImportData = JSON.parse(rawText);
+  } catch (e) {
+    parsedImportData = null;
+    if (statusBox) {
+      statusBox.style.display = 'block';
+      statusBox.style.color = 'var(--danger)';
+      statusBox.textContent = '❌ JSON inválido ou mal formatado: ' + e.message;
+    }
+    if (previewBox) previewBox.style.display = 'none';
+    if (confirmBtn) confirmBtn.disabled = true;
+    return;
+  }
+
+  var detected = {
+    canais: false,
+    grupos: false,
+    musicas: false,
+    aux: false,
+    canaisCount: 0,
+    gruposCount: 0,
+    musicasCount: 0,
+    auxCount: 0
+  };
+
+  if (parsedImportData.channelNames && typeof parsedImportData.channelNames === 'object') {
+    detected.canais = true;
+    detected.canaisCount = Object.keys(parsedImportData.channelNames).length;
+  } else if (parsedImportData.channels && typeof parsedImportData.channels === 'object' && !Array.isArray(parsedImportData.channels)) {
+    detected.canais = true;
+    detected.canaisCount = Object.keys(parsedImportData.channels).length;
+  } else if (parsedImportData.fixed && typeof parsedImportData.fixed === 'object') {
+    detected.canais = true;
+  }
+
+  if (Array.isArray(parsedImportData.groups)) {
+    detected.grupos = true;
+    detected.gruposCount = parsedImportData.groups.length;
+  }
+
+  if (Array.isArray(parsedImportData.songs)) {
+    detected.musicas = true;
+    detected.musicasCount = parsedImportData.songs.length;
+  } else if (Array.isArray(parsedImportData) && parsedImportData.length && parsedImportData[0] && parsedImportData[0].name) {
+    detected.musicas = true;
+    detected.musicasCount = parsedImportData.length;
+    parsedImportData = { songs: parsedImportData };
+  }
+
+  if (Array.isArray(parsedImportData.auxes)) {
+    detected.aux = true;
+    detected.auxCount = parsedImportData.auxes.length;
+  } else if (Array.isArray(parsedImportData.aux)) {
+    detected.aux = true;
+    detected.auxCount = parsedImportData.aux.length;
+    parsedImportData.auxes = parsedImportData.aux;
+  }
+
+  var anyFound = detected.canais || detected.grupos || detected.musicas || detected.aux;
+
+  if (!anyFound) {
+    if (statusBox) {
+      statusBox.style.display = 'block';
+      statusBox.style.color = 'var(--accent)';
+      statusBox.textContent = '⚠️ Nenhum dado compatível (canais, grupos, músicas ou aux) encontrado neste JSON.';
+    }
+    if (previewBox) previewBox.style.display = 'none';
+    if (confirmBtn) confirmBtn.disabled = true;
+    return;
+  }
+
+  if (statusBox) {
+    statusBox.style.display = 'block';
+    statusBox.style.color = 'var(--ok)';
+    statusBox.textContent = '✅ JSON válido (' + sourceName + ')! Selecione os itens a importar:';
+  }
+
+  if (previewBox) previewBox.style.display = 'block';
+  if (confirmBtn) confirmBtn.disabled = false;
+
+  var renderDetectedRow = function (id, isDetected, countStr) {
+    var row = document.getElementById('import-row-' + id);
+    var cb = document.getElementById('import-opt-' + id);
+    var countEl = document.getElementById('import-count-' + id);
+    if (!row || !cb) return;
+    if (!isDetected) {
+      row.style.display = 'none';
+      cb.checked = false;
+    } else {
+      row.style.display = 'flex';
+      cb.checked = true;
+      if (countEl) countEl.textContent = countStr;
+    }
+  };
+
+  renderDetectedRow('canais', detected.canais, detected.canaisCount + ' canais');
+  renderDetectedRow('grupos', detected.grupos, detected.gruposCount + ' grupos');
+  renderDetectedRow('musicas', detected.musicas, detected.musicasCount + ' músicas');
+  renderDetectedRow('aux', detected.aux, detected.auxCount + ' saídas aux');
+
+  var tudoCb = document.getElementById('import-opt-tudo');
+  if (tudoCb) tudoCb.checked = true;
+  updateImportSelectionStyles();
+}
+
+function onImportTudoToggle() {
+  var tudo = document.getElementById('import-opt-tudo').checked;
+  var items = ['canais', 'grupos', 'musicas', 'aux'];
+  items.forEach(function (id) {
+    var row = document.getElementById('import-row-' + id);
+    var cb = document.getElementById('import-opt-' + id);
+    if (row && row.style.display !== 'none' && cb) {
+      cb.checked = tudo;
+    }
+  });
+  updateImportSelectionStyles();
+}
+
+function onImportItemToggle() {
+  var items = ['canais', 'grupos', 'musicas', 'aux'];
+  var allChecked = true;
+  var visibleCount = 0;
+  items.forEach(function (id) {
+    var row = document.getElementById('import-row-' + id);
+    var cb = document.getElementById('import-opt-' + id);
+    if (row && row.style.display !== 'none') {
+      visibleCount++;
+      if (!cb || !cb.checked) allChecked = false;
+    }
+  });
+  var tudoCb = document.getElementById('import-opt-tudo');
+  if (tudoCb) tudoCb.checked = (visibleCount > 0 && allChecked);
+  updateImportSelectionStyles();
+}
+
+function updateImportSelectionStyles() {
+  var items = ['tudo', 'canais', 'grupos', 'musicas', 'aux'];
+  var anyChecked = false;
+  items.forEach(function (id) {
+    var cb = document.getElementById('import-opt-' + id);
+    if (!cb) return;
+    var parent = cb.closest('.config-opt-item');
+    if (cb.checked) {
+      if (parent) parent.classList.add('checked');
+      if (id !== 'tudo') anyChecked = true;
+    } else {
+      if (parent) parent.classList.remove('checked');
+    }
+  });
+  var confirmBtn = document.getElementById('btn-confirm-import');
+  if (confirmBtn) confirmBtn.disabled = !anyChecked;
+}
+
+function executeImport() {
+  if (!parsedImportData) return;
+
+  var impChannels = document.getElementById('import-opt-canais') && document.getElementById('import-opt-canais').checked;
+  var impGroups = document.getElementById('import-opt-grupos') && document.getElementById('import-opt-grupos').checked;
+  var impSongs = document.getElementById('import-opt-musicas') && document.getElementById('import-opt-musicas').checked;
+  var impAuxes = document.getElementById('import-opt-aux') && document.getElementById('import-opt-aux').checked;
+
+  var changesCount = 0;
+
+  if (impChannels) {
+    if (parsedImportData.channelNames) {
+      currentConfig.channelNames = JSON.parse(JSON.stringify(parsedImportData.channelNames));
+      changesCount++;
+    } else if (parsedImportData.channels && typeof parsedImportData.channels === 'object') {
+      currentConfig.channelNames = JSON.parse(JSON.stringify(parsedImportData.channels));
+      changesCount++;
+    }
+    if (parsedImportData.fixed) {
+      currentConfig.fixed = JSON.parse(JSON.stringify(parsedImportData.fixed));
+      changesCount++;
+    }
+  }
+
+  if (impGroups && Array.isArray(parsedImportData.groups)) {
+    currentConfig.groups = JSON.parse(JSON.stringify(parsedImportData.groups));
+    changesCount++;
+  }
+
+  if (impAuxes && Array.isArray(parsedImportData.auxes)) {
+    currentConfig.auxes = JSON.parse(JSON.stringify(parsedImportData.auxes));
+    changesCount++;
+  }
+
+  if (impSongs && Array.isArray(parsedImportData.songs)) {
+    currentSongs = JSON.parse(JSON.stringify(parsedImportData.songs));
+    if (window.Socket && typeof Socket.send === 'function') {
+      Socket.send({ type: 'setSongs', songs: currentSongs });
+    }
+    renderSongsList();
+    changesCount++;
+  }
+
+  if (changesCount > 0) {
+    renderChannelsTable();
+    renderGroupsList();
+    renderAuxesList();
+    renderFixedInputs();
+
+    saveAllConfig(function (res) {
+      var statusEl = document.getElementById('save-status');
+      if (statusEl) {
+        statusEl.style.display = 'inline-block';
+        if (res && res.ok) {
+          statusEl.style.color = 'var(--ok)';
+          statusEl.textContent = '✅ Importado e salvo com sucesso!';
+        } else {
+          statusEl.style.color = 'var(--danger)';
+          statusEl.textContent = '⚠️ Importado na tela, mas houve erro ao salvar: ' + ((res && res.error) || '');
+        }
+        setTimeout(function () {
+          if (statusEl.textContent.indexOf('Importado') !== -1) {
+            statusEl.style.display = 'none';
+            statusEl.textContent = '';
+          }
+        }, 5000);
+      }
+    });
+  }
+
+  closeImportModal();
+}
+
+function initImportDropzone() {
+  var dz = document.getElementById('import-dropzone');
+  if (!dz) return;
+  dz.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    dz.classList.add('dragover');
+  });
+  dz.addEventListener('dragleave', function () {
+    dz.classList.remove('dragover');
+  });
+  dz.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      handleImportFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  // Fechar modais ao pressionar ESC
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeExportModal();
+      closeImportModal();
+    }
   });
 }
 
@@ -1935,6 +2492,7 @@ setInterval(refreshStatus, 3000);
 Socket.connect();
 Socket.send({ type: 'hello', role: 'tech' });
 loadConfig();
+initImportDropzone();
 </script>
 </body>
 </html>
