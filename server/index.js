@@ -230,6 +230,7 @@ function getPrimaryTechUrl() {
 
 function hasSavedMixerConfig() {
   if (!config.mixer) return false;
+  if (process.argv.includes('--mixer')) return true;
   const model = (config.mixer.model || '').toLowerCase();
   // 'mock' é apenas modo de teste virtual, não conta como mesa física salva
   if (!model || model === 'mock') return false;
