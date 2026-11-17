@@ -63,6 +63,17 @@
     try { localStorage.setItem('who', JSON.stringify(w)); } catch (e) {}
   }
 
+  var DRUM_ORANGE_SHADES = [
+    '#C2410C', // Laranja escuro / grave (KICK / Bumbo)
+    '#EA580C', // Laranja vibrante (SNARE / Caixa)
+    '#FB923C', // Laranja médio quente (SNARE FX / Tom 1)
+    '#F97316', // Laranja principal da bateria
+    '#F59E0B', // Âmbar alaranjado (TOM 2)
+    '#D97706', // Âmbar escuro (SURDO)
+    '#FDBA74', // Laranja claro metálico (OH L / Chimbal)
+    '#FED7AA'  // Pêssego claro (OH R / Pratos)
+  ];
+
   function getGroupIcon(group) {
     var n = (group.name || group.id || '').toLowerCase();
     if (n.indexOf('bater') !== -1) return 'drum-kit';
@@ -77,18 +88,30 @@
 
   function getPieceIcon(name) {
     var n = (name || '').toLowerCase();
-    if (n.indexOf('bumbo') !== -1 || n.indexOf('kick') !== -1) return 'drum-kick';
-    if (n.indexOf('caixa') !== -1 || n.indexOf('snare') !== -1) return 'drum-snare';
-    if (n.indexOf('chimbal') !== -1 || n.indexOf('hihat') !== -1 || n.indexOf('prato') !== -1) return 'drum-hihat';
-    if (n.indexOf('over') !== -1 || n.indexOf('ton') !== -1 || n.indexOf('surdo') !== -1) return 'drum-toms';
+    if (n.indexOf('bumbo') !== -1 || n.indexOf('kick') !== -1 || n.indexOf('bd') !== -1) return 'drum-kick';
+    if (n.indexOf('caixa') !== -1 || n.indexOf('snare') !== -1 || n.indexOf('sd') !== -1) return 'drum-snare';
+    if (n.indexOf('chimbal') !== -1 || n.indexOf('hihat') !== -1 || n.indexOf('hh') !== -1) return 'drum-hihat';
+    if (n.indexOf('oh') !== -1 || n.indexOf('prato') !== -1 || n.indexOf('cymbal') !== -1 || n.indexOf('ride') !== -1 || n.indexOf('crash') !== -1) return 'drum-cymbal';
+    if (n.indexOf('over') !== -1 || n.indexOf('ton') !== -1 || n.indexOf('tom') !== -1 || n.indexOf('surdo') !== -1) return 'drum-toms';
     return 'drum-kit';
   }
 
   function getPieceColor(group, pieceName, index) {
+    var n = (pieceName || '').toLowerCase();
+    if (group.id === 'bateria' || (group.name && group.name.toLowerCase().indexOf('bater') !== -1)) {
+      if (n.indexOf('kick') !== -1 || n.indexOf('bumbo') !== -1) return '#C2410C';
+      if (n.indexOf('snare fx') !== -1) return '#FB923C';
+      if (n.indexOf('snare') !== -1 || n.indexOf('caixa') !== -1) return '#EA580C';
+      if (n.indexOf('tom 1') !== -1) return '#F97316';
+      if (n.indexOf('tom 2') !== -1) return '#F59E0B';
+      if (n.indexOf('surdo') !== -1) return '#D97706';
+      if (n.indexOf('oh l') !== -1 || n.indexOf('chimbal') !== -1 || n.indexOf('hihat') !== -1) return '#FDBA74';
+      if (n.indexOf('oh r') !== -1 || n.indexOf('prato') !== -1) return '#FED7AA';
+      return DRUM_ORANGE_SHADES[index % DRUM_ORANGE_SHADES.length];
+    }
     if (INSTRUMENT_PIECE_COLORS[pieceName]) {
       return INSTRUMENT_PIECE_COLORS[pieceName];
     }
-    // Variação suave da cor base do grupo
     var base = group.color || '#F97316';
     return base;
   }
@@ -154,9 +177,34 @@
     show('s-aux');
   }
 
+  function detectDevice() {
+    var ua = navigator.userAgent || '';
+    if (/Android/i.test(ua)) {
+      var m = ua.match(/Android[^;]+;\s*([^;)]+)\s*(?:Build|[;)])/i);
+      if (m && m[1] && m[1].trim().toLowerCase() !== 'k' && m[1].trim().length > 2) {
+        return m[1].trim();
+      }
+      return 'Android';
+    }
+    if (/iPhone/i.test(ua)) {
+      var v = ua.match(/OS (\d+[_.]\d+)/);
+      return 'iPhone' + (v ? ' (iOS ' + v[1].replace('_', '.') + ')' : '');
+    }
+    if (/iPad/i.test(ua)) return 'iPad';
+    if (/Windows/i.test(ua)) return 'PC Windows';
+    if (/Macintosh/i.test(ua)) return 'Mac';
+    return 'Celular / Web';
+  }
+
   function join() {
     save(who);
-    Socket.send({ type: 'join', person: who.person, instrument: who.instrument, aux: who.aux });
+    Socket.send({
+      type: 'join',
+      person: who.person,
+      instrument: who.instrument,
+      aux: who.aux,
+      device: detectDevice()
+    });
   }
 
   function renderBreadcrumb() {
@@ -219,7 +267,7 @@
         name: f[1],
         color: f[2],
         icon: f[3],
-        active: state.fixed ? state.fixed[f[0]] : 2,
+        active: (state.fixed && state.fixed[f[0]] !== undefined) ? state.fixed[f[0]] : 3,
         onSelect: function (s) {
           Socket.send({ type: 'setFixedLevel', target: f[0], step: s });
         }
@@ -246,7 +294,7 @@
           color: g.color,
           icon: gIcon,
           badge: chevron,
-          active: state.groups ? state.groups[g.id] : 2,
+          active: (state.groups && state.groups[g.id] !== undefined) ? state.groups[g.id] : 3,
           onTitleClick: hasSubchannels ? function () {
             currentGroup = g.id;
             renderMix();
@@ -268,7 +316,7 @@
           name: group.name,
           color: group.color,
           icon: gIcon,
-          active: state.groups ? state.groups[group.id] : 2,
+          active: (state.groups && state.groups[group.id] !== undefined) ? state.groups[group.id] : 2,
           onSelect: function (s) {
             Socket.send({ type: 'setGroupLevel', group: group.id, step: s });
           }
@@ -281,9 +329,10 @@
           var chName = (cfg.channelNames && cfg.channelNames[ch]) ? cfg.channelNames[ch] : ('Canal ' + ch);
           var pieceIcon = getPieceIcon(chName);
           var pieceColor = getPieceColor(group, chName, idx);
+          // Regra 1: Volume da peça é independente do grupo (não cai de volta para o master)
           var currentStep = (state.channels && state.channels[ch] !== undefined)
             ? state.channels[ch]
-            : (state.groups && state.groups[group.id] !== undefined ? state.groups[group.id] : 2);
+            : 2;
 
           var pieceRow = levelRow({
             name: chName,

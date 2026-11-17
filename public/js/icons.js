@@ -44,7 +44,16 @@ var Icons = (function () {
         '<path d="M13 13.5v3.5c0 1 1.6 1.8 3.5 1.8s3.5-.8 3.5-1.8v-3.5"/>' +
       '</svg>',
 
-    // 5. Bateria Geral (Drum Kit): Kit de bateria completo com bumbo, tons, chimbal e pratos
+    // 5. Prato Suspenso / Overhead (Cymbal / Ride / Crash)
+    'drum-cymbal':
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 3.5v17.5"/>' +
+        '<circle cx="12" cy="7" r="1.5" fill="currentColor"/>' +
+        '<path d="M3 11c2.5-2 6-2.5 9-2.5s6.5.5 9 2.5"/>' +
+        '<path d="M8 21l4-2 4 2"/>' +
+      '</svg>',
+
+    // 6. Bateria Geral (Drum Kit): Kit de bateria completo com bumbo, tons, chimbal e pratos
     'drum-kit':
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="12" cy="14" r="5.5"/>' +

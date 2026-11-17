@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <rect width="100" height="100" rx="24" fill="#0E1116"/>
+  <rect x="2" y="2" width="96" height="96" rx="22" stroke="#252A34" stroke-width="2"/>
+  <!-- Fone / Ondas de Retorno -->
+  <path d="M26 50 C26 36 37 25 50 25 C63 25 74 36 74 50" stroke="#4F8CFF" stroke-width="6" stroke-linecap="round"/>
+  <!-- Conchas do fone -->
+  <rect x="22" y="46" width="10" height="20" rx="5" fill="#4F8CFF"/>
+  <rect x="68" y="46" width="10" height="20" rx="5" fill="#4F8CFF"/>
+  <!-- Ondas sonoras centrais -->
+  <line x1="42" y1="50" x2="42" y2="62" stroke="#00D284" stroke-width="4" stroke-linecap="round"/>
+  <line x1="50" y1="42" x2="50" y2="70" stroke="#00D284" stroke-width="4" stroke-linecap="round"/>
+  <line x1="58" y1="48" x2="58" y2="64" stroke="#00D284" stroke-width="4" stroke-linecap="round"/>
+</svg>

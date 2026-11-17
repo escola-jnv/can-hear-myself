@@ -40,3 +40,34 @@ test('ajusta nível individual de canal de forma independente', async () => {
   assert.strictEqual(d.sends['3:13'], -10); // Bumbo (ch 13) continua em -10
   assert.strictEqual(mix.auxState(3).channels[14], 4);
 });
+
+test('ao mudar o master do grupo, NÃO influencia o volume de cada peça', async () => {
+  const d = new MockDriver({ quiet: true }); const mix = new Mix(config, d);
+  // Peça configurada individualmente
+  await mix.setChannelLevel(3, 13, 4); // Kick = 4
+  await mix.setChannelLevel(3, 14, 1); // Caixa = 1
+  assert.strictEqual(mix.auxState(3).channels[13], 4);
+  assert.strictEqual(mix.auxState(3).channels[14], 1);
+
+  // Muda o master do grupo
+  await mix.setGroupLevel(3, 'bateria', 3);
+
+  // Volumes de cada peça continuam inalterados
+  assert.strictEqual(mix.auxState(3).channels[13], 4);
+  assert.strictEqual(mix.auxState(3).channels[14], 1);
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 3);
+});
+
+test('ao mudar o volume da peça, NÃO influencia o volume do master', async () => {
+  const d = new MockDriver({ quiet: true }); const mix = new Mix(config, d);
+  // Master configurado
+  await mix.setGroupLevel(3, 'bateria', 2);
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 2);
+
+  // Muda o volume de uma peça
+  await mix.setChannelLevel(3, 14, 4); // Caixa = 4
+
+  // Master do grupo continua inalterado em 2
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 2);
+  assert.strictEqual(mix.auxState(3).channels[14], 4);
+});

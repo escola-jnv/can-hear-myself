@@ -14,7 +14,7 @@
 
 ## Presets
 - Chave: pessoa + instrumento + aux. Salvos no servidor em `data/presets/`.
-- Sem preset salvo: carrega a mix padrão do instrumento.
+- Sem preset salvo: por padrão, ao acessar a mesa, todos os volumes estarão no nível 3.
 
 ## Pedidos de ajuda
 1. Não estou me ouvindo

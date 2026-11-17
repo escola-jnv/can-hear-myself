@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Técnico · Can Hear Myself</title>
+<title>Can Hear Myself · Painel do Técnico</title>
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/app.css">
 <style>
   body {
     max-width: 900px;
     margin: 0 auto;
-    padding-bottom: 80px;
+    padding-bottom: 24px;
   }
   .tech-header {
     display: flex;
@@ -30,6 +31,25 @@
     align-items: center;
     gap: 8px;
   }
+  .tabs-bar-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 16px;
+    flex-wrap: wrap;
+  }
+  .tabs-bar-wrapper .tabs {
+    margin: 0;
+    flex: 1;
+    min-width: 320px;
+  }
+  .tabs-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
   .tabs {
     display: flex;
     gap: 6px;
@@ -37,7 +57,6 @@
     padding: 4px;
     border-radius: var(--radius);
     border: 1px solid var(--border);
-    margin: 16px;
     overflow-x: auto;
   }
   .tab-btn {
@@ -144,6 +163,11 @@
   .btn:hover {
     border-color: var(--text-2);
   }
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
   .btn-primary {
     background: var(--accent);
     color: #111;
@@ -203,31 +227,159 @@
     font-size: 14px;
     display: inline-block;
   }
-  .group-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
+  .save-status {
+    font-size: 13px;
+    color: var(--ok);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
   }
-  .save-bar {
+  /* Modais de Importação e Exportação */
+  .modal-overlay {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+  .modal-card {
     background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 12px 24px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 20;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
   }
-  .save-status {
-    font-size: 14px;
-    color: var(--ok);
+  .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .modal-close-btn {
+    background: none;
+    border: none;
+    color: var(--text-2);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    line-height: 1;
+  }
+  .modal-close-btn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .config-opt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .config-opt-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .config-opt-item:hover {
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .config-opt-item.checked {
+    border-color: rgba(245, 165, 36, 0.5);
+    background: rgba(245, 165, 36, 0.06);
+  }
+  .config-opt-item.master-opt {
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.04);
+    font-weight: 600;
+  }
+  .config-opt-item.master-opt.checked {
+    border-color: var(--accent);
+    background: rgba(245, 165, 36, 0.12);
+  }
+  .config-opt-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .config-opt-label {
+    font-size: 15px;
     font-weight: 500;
+    color: var(--text);
+  }
+  .config-opt-desc {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 2px;
+  }
+  .config-opt-badge {
+    font-size: 12px;
+    color: var(--text-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+  .config-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+  .import-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg);
+    transition: all 0.2s ease;
+  }
+  .import-dropzone:hover, .import-dropzone.dragover {
+    border-color: var(--accent);
+    background: rgba(245, 165, 36, 0.05);
   }
   .group-item, .aux-item {
     display: flex;
@@ -239,12 +391,97 @@
   .group-item:last-child, .aux-item:last-child {
     border-bottom: none;
   }
-  .server-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
-  .server-grid .label { font-size:13px; color:var(--text-2); margin-bottom:4px; }
-  .server-grid .url { font-size:16px; font-weight:600; color:var(--accent); word-break:break-all; }
-  .big-count { font-size:36px; font-weight:700; color:var(--accent); line-height:1; }
-  .people-list { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
-  .people-list div { font-size:14px; padding:6px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+  .server-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .server-grid .label {
+    font-size: 13px;
+    color: var(--text-2);
+    margin-bottom: 4px;
+  }
+  .server-grid .url {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  .mixer-opt-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .mixer-opt-card:hover {
+    border-color: var(--accent);
+  }
+  .mixer-opt-card.selected {
+    border-color: var(--accent);
+    background: rgba(245, 165, 36, 0.08);
+  }
+  .session-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .device-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .song-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: all 0.15s ease;
+  }
+  .song-row.current {
+    border-color: var(--accent);
+    background: rgba(245, 165, 36, 0.08);
+  }
+  .song-order {
+    font-weight: 700;
+    color: var(--text-2);
+    width: 28px;
+    font-size: 15px;
+  }
+  .song-meta {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-2);
+    margin-top: 3px;
+  }
+  .song-tag {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
   .notice { font-size:14px; color:var(--accent); margin:0 16px 12px; }
 </style>
 </head>
@@ -255,54 +492,214 @@
     <span>🎚️ Can Hear Myself</span>
     <span style="font-size:14px;color:var(--text-2);font-weight:normal">· Técnico</span>
   </div>
-  <div id="status-pill" class="dot">● Conectando...</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="save-status" class="save-status" style="display:none"></div>
+    <div id="status-pill" class="dot">● Conectando...</div>
+  </div>
 </header>
 
 <p id="readonly-notice" class="notice" style="display:none">Você está vendo o painel de outro aparelho. O mapeamento de canais só pode ser salvo no computador do servidor.</p>
-<nav class="tabs">
-  <button id="tab-btn-monitor" class="tab-btn active" onclick="switchTab('monitor')">
-    🔔 Monitoramento <span id="badge-requests" class="badge" style="display:none">0</span>
-  </button>
-  <button id="tab-btn-channels" class="tab-btn" onclick="switchTab('channels')">
-    🎛️ Canais & Instrumentos
-  </button>
-  <button id="tab-btn-groups" class="tab-btn" onclick="switchTab('groups')">
-    🏷️ Grupos
-  </button>
-  <button id="tab-btn-auxes" class="tab-btn" onclick="switchTab('auxes')">
-    🎧 Saídas Auxiliares
-  </button>
-</nav>
 
-<!-- ABA 1: MONITORAMENTO -->
+<div class="tabs-bar-wrapper">
+  <nav class="tabs">
+    <button id="tab-btn-monitor" class="tab-btn active" onclick="switchTab('monitor')">
+      🔔 Monitoramento <span id="badge-requests" class="badge" style="display:none">0</span>
+    </button>
+    <button id="tab-btn-channels" class="tab-btn" onclick="switchTab('channels')">
+      🎛️ Canais & Instrumentos
+    </button>
+    <button id="tab-btn-groups" class="tab-btn" onclick="switchTab('groups')">
+      🏷️ Grupos
+    </button>
+    <button id="tab-btn-auxes" class="tab-btn" onclick="switchTab('auxes')">
+      🎧 Saídas Auxiliares
+    </button>
+  </nav>
+  <div class="tabs-actions">
+    <button class="btn btn-sm" onclick="openImportModal()" title="Importar configurações em formato JSON">
+      📥 Importar JSON
+    </button>
+    <button class="btn btn-sm btn-primary" onclick="openExportModal()" title="Exportar configurações em formato JSON">
+      📤 Exportar JSON
+    </button>
+  </div>
+</div>
+
+<!-- ABA 1: MONITORAMENTO (DASHBOARD PRINCIPAL) -->
 <main id="tab-monitor" class="tab-content active">
+
+  <!-- 1. MESA DE SOM & ENDEREÇOS -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Servidor</h2>
-      <span id="mixer-info" style="font-size:14px;color:var(--text-2)"></span>
+      <h2 class="card-title">🎛️ Mesa de Som & Conexão</h2>
+      <span id="mixer-connected-dot" class="dot">● Conectando...</span>
     </div>
     <div class="server-grid">
-      <div><div class="label">Músicos: abram no celular</div><div id="musician-urls" class="url">…</div></div>
-      <div><div class="label">Técnico</div><div id="tech-urls" class="url">…</div></div>
-      <div><div class="label">Pessoas conectadas</div><div id="connected-count" class="big-count">0</div></div>
+      <div>
+        <div class="label">Mesa Atual</div>
+        <div id="mixer-name-display" class="url" style="color:var(--text)">Carregando...</div>
+        <div id="mixer-ip-display" style="font-size:13px;color:var(--text-2);margin-top:2px">IP: …</div>
+      </div>
+      <div>
+        <div class="label">Músicos: abram no celular (mesmo Wi-Fi)</div>
+        <div id="musician-urls" class="url">…</div>
+      </div>
+      <div>
+        <div class="label">Painel do Técnico</div>
+        <div id="tech-urls" class="url">…</div>
+      </div>
     </div>
-    <div id="people-list" class="people-list"></div>
+
+    <!-- SELEÇÃO E CONFIGURAÇÃO DA MESA -->
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label for="select-mixer-model" style="font-size:14px;font-weight:600">Selecionar Mesa:</label>
+          <select id="select-mixer-model" onchange="onMixerModelChanged(this.value)" style="min-width:210px">
+            <option value="ui24r">Soundcraft Ui24R</option>
+            <option value="x32">Behringer X32 / M32</option>
+            <option value="xair">Behringer X Air (XR12 / XR16 / XR18)</option>
+            <option value="mock">Mesa Virtual (Mock)</option>
+          </select>
+        </div>
+        <span id="mixer-save-indicator" style="font-size:13px;font-weight:500"></span>
+      </div>
+
+      <!-- OPÇÕES DE CONEXÃO AO SELECIONAR A MESA -->
+      <div id="mixer-connection-section" style="margin-top:10px">
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:10px">
+          Opção de conexão para <strong id="selected-mixer-name-label" style="color:var(--text)">Soundcraft Ui24R</strong>:
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:12px">
+          
+          <!-- OPÇÃO 1: MOCK -->
+          <div id="opt-card-mock" class="mixer-opt-card" onclick="setConnectionMode('mock')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <input type="radio" name="conn-mode-choice" id="radio-conn-mock" value="mock" onchange="setConnectionMode('mock')">
+              <label for="radio-conn-mock" style="font-weight:600;font-size:14px;cursor:pointer">1. Mock</label>
+            </div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.4">
+              Mesa virtual em memória. Ideal para testes sem conectar na mesa física.
+            </div>
+          </div>
+
+          <!-- OPÇÃO 2: SEARCH AUTO -->
+          <div id="opt-card-auto" class="mixer-opt-card" onclick="setConnectionMode('auto')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <input type="radio" name="conn-mode-choice" id="radio-conn-auto" value="auto" onchange="setConnectionMode('auto')">
+              <label for="radio-conn-auto" style="font-weight:600;font-size:14px;cursor:pointer">2. Search auto</label>
+            </div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.4">
+              Varrer os IPs para saber qual IP da mesa na rede automaticamente.
+            </div>
+          </div>
+
+          <!-- OPÇÃO 3: DIGITAR IP MANUALMENTE -->
+          <div id="opt-card-manual" class="mixer-opt-card" onclick="setConnectionMode('manual')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <input type="radio" name="conn-mode-choice" id="radio-conn-manual" value="manual" onchange="setConnectionMode('manual')">
+              <label for="radio-conn-manual" style="font-weight:600;font-size:14px;cursor:pointer">3. Digitar IP manualmente</label>
+            </div>
+            <div style="font-size:12px;color:var(--text-2);line-height:1.4">
+              Digitar diretamente o IP fixo ou Wi-Fi da mesa de som.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- PAINEL 1: MOCK -->
+        <div id="panel-conn-mock" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+          <p style="font-size:13px;color:var(--text-2);margin:0 0 10px 0">
+            A mesa será executada em modo simulado (Mock). Os faders, canais e mixagens responderão normalmente sem conexão de hardware.
+          </p>
+          <button class="btn btn-primary btn-sm" onclick="applyMixerConnection('mock')">
+            ✓ Ativar Modo Mock
+          </button>
+        </div>
+
+        <!-- PAINEL 2: SEARCH AUTO -->
+        <div id="panel-conn-auto" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <button id="btn-scan-network" class="btn btn-primary btn-sm" onclick="performMixerScan()">
+              🔍 Varrer IPs da Rede Local
+            </button>
+            <span id="scan-loading-indicator" style="display:none;font-size:13px;color:var(--accent)">
+              ⏳ Varrendo sub-redes (portas HTTP 80 e OSC 10023/10024)... Aguarde ~2s.
+            </span>
+          </div>
+          <div id="scan-feedback" style="font-size:13px;color:var(--text-2)">
+            Clique no botão para varrer automaticamente os endereços IP da rede e localizar a mesa.
+          </div>
+          <div id="scan-results-list" style="margin-top:10px;display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+
+        <!-- PAINEL 3: DIGITAR IP MANUALMENTE -->
+        <div id="panel-conn-manual" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <label for="input-manual-ip" style="font-size:13px;font-weight:500">IP da Mesa:</label>
+            <input type="text" id="input-manual-ip" placeholder="Ex: 10.10.1.1 ou 192.168.1.50" style="width:200px" onkeydown="if(event.key==='Enter')applyMixerConnection('manual')">
+            <button class="btn btn-primary btn-sm" onclick="applyMixerConnection('manual')">
+              💾 Conectar neste IP
+            </button>
+          </div>
+          <p style="font-size:12px;color:var(--text-2);margin:8px 0 0 0">
+            Dica: Se estiver conectado ao ponto de acesso Wi-Fi próprio da Ui24R, use <code>10.10.1.1</code>. Se estiver no roteador, consulte o IP nos ajustes da mesa.
+          </p>
+        </div>
+
+      </div>
+    </div>
   </div>
+
+  <!-- 2. MÚSICOS CONECTADOS & APARELHOS -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Pedidos de ajuda</h2>
+      <h2 class="card-title">📱 Músicos Conectados (<span id="connected-count">0</span>)</h2>
+    </div>
+    <div id="people-list">
+      <p style="color:var(--text-2);font-size:14px">Nenhum músico conectado no momento.</p>
+    </div>
+  </div>
+
+  <!-- 3. SEQUÊNCIA DE MÚSICAS (REPERTÓRIO / SETLIST) -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">🎵 Sequência de Músicas (Repertório)</h2>
+      <span id="current-song-badge" style="font-size:14px;font-weight:600;color:var(--text-2)">Tocando: Nenhuma</span>
+    </div>
+
+    <!-- Formulário para adicionar música à sequência -->
+    <form id="add-song-form" onsubmit="handleAddSong(event)" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <input type="text" id="song-name-input" placeholder="Nome da Música (ex: Graça Infalível)" required style="flex:2;min-width:180px">
+      <input type="text" id="song-key-input" placeholder="Tom (ex: G, Em)" style="width:100px">
+      <input type="number" id="song-bpm-input" placeholder="BPM" style="width:90px" min="40" max="300">
+      <button type="submit" class="btn btn-primary">+ Adicionar</button>
+    </form>
+
+    <!-- Lista com a sequência das músicas -->
+    <div id="songs-list">
+      <p style="color:var(--text-2);font-size:14px">Carregando repertório...</p>
+    </div>
+  </div>
+
+  <!-- 4. PEDIDOS DE AJUDA -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">🚨 Pedidos de Ajuda</h2>
     </div>
     <div id="requests" class="list">
       <p style="color:var(--text-2)">Nenhum pedido aberto.</p>
     </div>
   </div>
 
+  <!-- 5. ATIVIDADE RECENTE -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Atividade recente</h2>
+      <h2 class="card-title">📜 Atividade Recente</h2>
       <button class="btn" style="padding:4px 8px;font-size:13px;" onclick="document.getElementById('log').innerHTML=''">Limpar</button>
     </div>
-    <div id="log" style="font-size:14px;color:var(--text-2);max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+    <div id="log" style="font-size:14px;color:var(--text-2);max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
   </div>
 </main>
 
@@ -367,12 +764,12 @@
     </p>
     <div class="group-item">
       <strong style="width:120px">Clique (Metrônomo):</strong>
-      <input type="text" id="fixed-click-channels" placeholder="Ex: 15" style="width:140px" onchange="updateFixedFromInputs()">
+      <input type="text" id="fixed-click-channels" placeholder="Ex: 21" style="width:140px" onchange="updateFixedFromInputs()">
       <span style="font-size:13px;color:var(--text-2)">Canais separados por vírgula</span>
     </div>
     <div class="group-item">
       <strong style="width:120px">Talkback:</strong>
-      <input type="text" id="fixed-talkback-channels" placeholder="Ex: 16" style="width:140px" onchange="updateFixedFromInputs()">
+      <input type="text" id="fixed-talkback-channels" placeholder="Ex: 7" style="width:140px" onchange="updateFixedFromInputs()">
       <span style="font-size:13px;color:var(--text-2)">Canais separados por vírgula</span>
     </div>
   </div>
@@ -394,13 +791,189 @@
   </div>
 </main>
 
-<!-- BARRA FIXA DE SALVAR -->
-<footer class="save-bar">
-  <div id="save-status" class="save-status"></div>
-  <button class="btn btn-primary" style="padding:10px 24px;font-size:16px" onclick="saveAllConfig()">
-    💾 Salvar Alterações
-  </button>
-</footer>
+<!-- MODAL DE EXPORTAÇÃO -->
+<div id="export-modal" class="modal-overlay" onclick="if(event.target===this)closeExportModal()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">📤 Exportar Configurações (JSON)</h3>
+      <button class="modal-close-btn" onclick="closeExportModal()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--text-2);margin-bottom:14px">
+        Escolha quais configurações você deseja exportar. O arquivo será gerado em formato JSON.
+      </p>
+
+      <div class="config-opt-list">
+        <!-- Opção TUDO -->
+        <label class="config-opt-item master-opt checked">
+          <div class="config-opt-left">
+            <input type="checkbox" id="export-opt-tudo" class="config-checkbox" checked onchange="onExportTudoToggle()">
+            <div>
+              <div class="config-opt-label">✨ TUDO (Todas as configurações)</div>
+              <div class="config-opt-desc">Exporta canais, grupos, músicas e saídas auxiliares</div>
+            </div>
+          </div>
+        </label>
+
+        <!-- Canais -->
+        <label class="config-opt-item checked">
+          <div class="config-opt-left">
+            <input type="checkbox" id="export-opt-canais" class="config-checkbox" checked onchange="onExportItemToggle()">
+            <div>
+              <div class="config-opt-label">🎛️ Canais & Instrumentos</div>
+              <div class="config-opt-desc">Nomes dos instrumentos, canais de clique e talkback</div>
+            </div>
+          </div>
+          <span id="export-count-canais" class="config-opt-badge">...</span>
+        </label>
+
+        <!-- Grupos -->
+        <label class="config-opt-item checked">
+          <div class="config-opt-left">
+            <input type="checkbox" id="export-opt-grupos" class="config-checkbox" checked onchange="onExportItemToggle()">
+            <div>
+              <div class="config-opt-label">🏷️ Grupos de Instrumentos</div>
+              <div class="config-opt-desc">Grupos, cores, ícones e canais vinculados</div>
+            </div>
+          </div>
+          <span id="export-count-grupos" class="config-opt-badge">...</span>
+        </label>
+
+        <!-- Músicas -->
+        <label class="config-opt-item checked">
+          <div class="config-opt-left">
+            <input type="checkbox" id="export-opt-musicas" class="config-checkbox" checked onchange="onExportItemToggle()">
+            <div>
+              <div class="config-opt-label">🎵 Músicas (Repertório)</div>
+              <div class="config-opt-desc">Sequência de músicas, tons e andamento (BPM)</div>
+            </div>
+          </div>
+          <span id="export-count-musicas" class="config-opt-badge">...</span>
+        </label>
+
+        <!-- Auxiliares -->
+        <label class="config-opt-item checked">
+          <div class="config-opt-left">
+            <input type="checkbox" id="export-opt-aux" class="config-checkbox" checked onchange="onExportItemToggle()">
+            <div>
+              <div class="config-opt-label">🎧 Saídas Auxiliares</div>
+              <div class="config-opt-desc">Nomes e identificação das saídas de fone</div>
+            </div>
+          </div>
+          <span id="export-count-aux" class="config-opt-badge">...</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeExportModal()">Cancelar</button>
+      <button id="btn-copy-export" class="btn" onclick="copyExportJSON()" title="Copiar conteúdo JSON para a área de transferência">📋 Copiar JSON</button>
+      <button id="btn-execute-export" class="btn btn-primary" onclick="executeExport()">💾 Baixar Arquivo JSON</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE IMPORTAÇÃO -->
+<div id="import-modal" class="modal-overlay" onclick="if(event.target===this)closeImportModal()">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 class="modal-title">📥 Importar Configurações (JSON)</h3>
+      <button class="modal-close-btn" onclick="closeImportModal()" title="Fechar">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--text-2);margin-bottom:14px">
+        Carregue um arquivo JSON exportado anteriormente para restaurar configurações de canais, grupos, repertório ou saídas.
+      </p>
+
+      <!-- Dropzone -->
+      <div id="import-dropzone" class="import-dropzone" onclick="document.getElementById('import-file-input').click()">
+        <input type="file" id="import-file-input" accept=".json,application/json" style="display:none" onchange="handleImportFileSelect(event)">
+        <div style="font-size:28px;margin-bottom:6px">📁</div>
+        <div style="font-weight:600;font-size:15px;color:var(--text)">Escolher arquivo JSON do computador</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:4px">ou arraste e solte o arquivo aqui</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+        <button type="button" class="btn btn-sm" onclick="toggleImportTextarea()">✍️ Ou colar JSON manualmente</button>
+        <span id="import-file-name" style="font-size:13px;color:var(--accent);font-weight:500"></span>
+      </div>
+
+      <textarea id="import-json-text" placeholder="Cole o código JSON aqui..." style="display:none;width:100%;height:100px;margin-top:10px;font-family:monospace;font-size:12px;box-sizing:border-box" oninput="handleImportTextChange()"></textarea>
+
+      <div id="import-parse-status" style="display:none;margin-top:12px;font-size:14px;font-weight:500"></div>
+
+      <!-- Configurações detectadas -->
+      <div id="import-detected-box" style="display:none;margin-top:14px">
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">
+          Configurações encontradas no arquivo:
+        </div>
+
+        <div class="config-opt-list">
+          <label class="config-opt-item master-opt checked">
+            <div class="config-opt-left">
+              <input type="checkbox" id="import-opt-tudo" class="config-checkbox" checked onchange="onImportTudoToggle()">
+              <div>
+                <div class="config-opt-label">✨ TUDO (Importar todos os itens detectados)</div>
+                <div class="config-opt-desc">Aplica todas as configurações presentes no arquivo</div>
+              </div>
+            </div>
+          </label>
+
+          <label id="import-row-canais" class="config-opt-item checked">
+            <div class="config-opt-left">
+              <input type="checkbox" id="import-opt-canais" class="config-checkbox" checked onchange="onImportItemToggle()">
+              <div>
+                <div class="config-opt-label">🎛️ Canais & Instrumentos</div>
+                <div class="config-opt-desc">Substitui nomes de instrumentos, clique e talkback</div>
+              </div>
+            </div>
+            <span id="import-count-canais" class="config-opt-badge">...</span>
+          </label>
+
+          <label id="import-row-grupos" class="config-opt-item checked">
+            <div class="config-opt-left">
+              <input type="checkbox" id="import-opt-grupos" class="config-checkbox" checked onchange="onImportItemToggle()">
+              <div>
+                <div class="config-opt-label">🏷️ Grupos de Instrumentos</div>
+                <div class="config-opt-desc">Substitui grupos, cores e distribuição de canais</div>
+              </div>
+            </div>
+            <span id="import-count-grupos" class="config-opt-badge">...</span>
+          </label>
+
+          <label id="import-row-musicas" class="config-opt-item checked">
+            <div class="config-opt-left">
+              <input type="checkbox" id="import-opt-musicas" class="config-checkbox" checked onchange="onImportItemToggle()">
+              <div>
+                <div class="config-opt-label">🎵 Músicas (Repertório)</div>
+                <div class="config-opt-desc">Substitui a sequência atual de músicas</div>
+              </div>
+            </div>
+            <span id="import-count-musicas" class="config-opt-badge">...</span>
+          </label>
+
+          <label id="import-row-aux" class="config-opt-item checked">
+            <div class="config-opt-left">
+              <input type="checkbox" id="import-opt-aux" class="config-checkbox" checked onchange="onImportItemToggle()">
+              <div>
+                <div class="config-opt-label">🎧 Saídas Auxiliares</div>
+                <div class="config-opt-desc">Substitui os nomes das saídas auxiliares</div>
+              </div>
+            </div>
+            <span id="import-count-aux" class="config-opt-badge">...</span>
+          </label>
+        </div>
+
+        <p style="font-size:12px;color:var(--accent);margin-top:10px">
+          ⚠️ As configurações selecionadas substituirão as atuais e serão salvas imediatamente.
+        </p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeImportModal()">Cancelar</button>
+      <button id="btn-confirm-import" class="btn btn-primary" disabled onclick="executeImport()">Confirmar e Importar</button>
+    </div>
+  </div>
+</div>
 
 <script src="js/socket.js"></script>
 <script>
@@ -413,6 +986,16 @@ var currentConfig = {
 };
 var maxVisibleChannels = 24;
 var reqs = {};
+var currentSongs = [];
+var currentPlayingSong = null;
+
+var autoSaveTimer = null;
+function triggerAutoSave() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(function () {
+    saveAllConfig();
+  }, 400);
+}
 
 function switchTab(name) {
   var tabs = ['monitor', 'channels', 'groups', 'auxes'];
@@ -428,7 +1011,7 @@ function loadConfig() {
     .then(function (cfg) {
       currentConfig = cfg;
       if (!currentConfig.channelNames) currentConfig.channelNames = {};
-      if (!currentConfig.fixed) currentConfig.fixed = { click: { name: 'Clique', channels: [15] }, talkback: { name: 'Talkback', channels: [16] } };
+      if (!currentConfig.fixed) currentConfig.fixed = { click: { name: 'Clique', channels: [21] }, talkback: { name: 'Talkback', channels: [7] } };
       renderChannelsTable();
       renderGroupsList();
       renderAuxesList();
@@ -440,7 +1023,6 @@ function loadConfig() {
 }
 
 function getChannelAssignment(ch) {
-  // Retorna { type: 'group'|'fixed'|'none', id: string, name: string, color: string }
   if (currentConfig.fixed && currentConfig.fixed.click && currentConfig.fixed.click.channels && currentConfig.fixed.click.channels.indexOf(ch) !== -1) {
     return { type: 'fixed', id: 'click', name: 'Clique', color: '#94A3B8' };
   }
@@ -460,11 +1042,9 @@ function renderChannelsTable() {
   var tbody = document.getElementById('channel-rows');
   tbody.innerHTML = '';
 
-  // Determinar quais canais mostrar
   var allChannels = [];
   for (var i = 1; i <= maxVisibleChannels; i++) allChannels.push(i);
 
-  // Incluir também qualquer canal que já esteja mapeado além do maxVisibleChannels
   if (currentConfig.groups) {
     currentConfig.groups.forEach(function (g) {
       (g.channels || []).forEach(function (ch) {
@@ -540,7 +1120,6 @@ function renderChannelsTable() {
     optTalk.textContent = 'Fixo: Talkback';
     selectGroup.appendChild(optTalk);
 
-    // Set value
     var currentAssigned = getChannelAssignment(ch);
     if (currentAssigned.type === 'group') {
       selectGroup.value = 'group:' + currentAssigned.id;
@@ -578,13 +1157,11 @@ function renderChannelsTable() {
 }
 
 function setChannelTarget(ch, targetValue) {
-  // Remove de qualquer grupo existente
   (currentConfig.groups || []).forEach(function (g) {
     if (!g.channels) g.channels = [];
     var idx = g.channels.indexOf(ch);
     if (idx !== -1) g.channels.splice(idx, 1);
   });
-  // Remove de fixos
   if (currentConfig.fixed) {
     ['click', 'talkback'].forEach(function (k) {
       if (currentConfig.fixed[k] && currentConfig.fixed[k].channels) {
@@ -594,7 +1171,6 @@ function setChannelTarget(ch, targetValue) {
     });
   }
 
-  // Adiciona ao novo destino se aplicável
   if (targetValue.startsWith('group:')) {
     var gid = targetValue.replace('group:', '');
     var g = (currentConfig.groups || []).find(function (x) { return x.id === gid; });
@@ -803,7 +1379,180 @@ function saveAllConfig() {
   });
 }
 
-// LÓGICA DE SOCKET & MONITORAMENTO
+// --------------------------------------------------------------------------
+// MÚSICOS CONECTADOS & APARELHOS
+// --------------------------------------------------------------------------
+function renderSessionsList(list) {
+  var countEl = document.getElementById('connected-count');
+  if (countEl) countEl.textContent = list.length;
+  var el = document.getElementById('people-list');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!list || list.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-2);font-size:14px;padding:4px 0">Nenhum músico conectado no momento.</p>';
+    return;
+  }
+
+  list.forEach(function (p) {
+    var item = document.createElement('div');
+    item.className = 'session-card';
+
+    var left = document.createElement('div');
+    left.style.display = 'flex';
+    left.style.alignItems = 'center';
+    left.style.gap = '10px';
+
+    var auxPill = document.createElement('span');
+    auxPill.className = 'ch-pill';
+    auxPill.textContent = 'Aux ' + p.aux;
+    left.appendChild(auxPill);
+
+    var info = document.createElement('div');
+    info.innerHTML = '<strong>' + p.person + '</strong> <span style="color:var(--text-2)">· ' + p.instrument + '</span>';
+    left.appendChild(info);
+
+    item.appendChild(left);
+
+    var right = document.createElement('div');
+    var devPill = document.createElement('span');
+    devPill.className = 'device-pill';
+    var icon = /iPhone|iPad/i.test(p.device) ? '🍎' : (/Android/i.test(p.device) ? '📱' : (/Windows|PC/i.test(p.device) ? '💻' : '🌐'));
+    devPill.textContent = icon + ' ' + (p.device || 'Dispositivo Móvel');
+    right.appendChild(devPill);
+
+    item.appendChild(right);
+    el.appendChild(item);
+  });
+}
+
+// --------------------------------------------------------------------------
+// REPERTÓRIO & SEQUÊNCIA DE MÚSICAS
+// --------------------------------------------------------------------------
+function renderSongsList() {
+  var el = document.getElementById('songs-list');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!currentSongs || currentSongs.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-2);font-size:14px;padding:8px 0">Nenhuma música cadastrada no repertório. Adicione acima para montar a sequência!</p>';
+    return;
+  }
+
+  currentSongs.forEach(function (song, idx) {
+    var isCurrent = currentPlayingSong && (currentPlayingSong.id === song.id || currentPlayingSong.name === song.name);
+    var row = document.createElement('div');
+    row.className = 'song-row' + (isCurrent ? ' current' : '');
+
+    var left = document.createElement('div');
+    left.style.display = 'flex';
+    left.style.alignItems = 'center';
+    left.style.gap = '10px';
+    left.style.flex = '1';
+
+    var order = document.createElement('span');
+    order.className = 'song-order';
+    order.textContent = '#' + (idx + 1);
+    left.appendChild(order);
+
+    var info = document.createElement('div');
+    var title = document.createElement('strong');
+    title.style.fontSize = '15px';
+    title.textContent = song.name;
+    if (isCurrent) {
+      title.innerHTML += ' <span style="color:var(--accent);font-size:12px;font-weight:normal">● Tocando agora</span>';
+    }
+    info.appendChild(title);
+
+    var meta = document.createElement('div');
+    meta.className = 'song-meta';
+    if (song.key) {
+      meta.innerHTML += '<span class="song-tag">Tom ' + song.key + '</span>';
+    }
+    if (song.bpm) {
+      meta.innerHTML += '<span class="song-tag">' + song.bpm + ' BPM</span>';
+    }
+    info.appendChild(meta);
+    left.appendChild(info);
+    row.appendChild(left);
+
+    var actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.alignItems = 'center';
+    actions.style.gap = '6px';
+
+    // Botao Tocar Agora
+    var btnPlay = document.createElement('button');
+    btnPlay.type = 'button';
+    btnPlay.className = 'btn btn-sm' + (isCurrent ? ' btn-primary' : '');
+    btnPlay.innerHTML = isCurrent ? '✓ No Ar' : '▶ Tocar';
+    btnPlay.onclick = function () {
+      Socket.send({ type: 'setSong', songId: song.id });
+    };
+    actions.appendChild(btnPlay);
+
+    // Botao Subir
+    if (idx > 0) {
+      var btnUp = document.createElement('button');
+      btnUp.type = 'button';
+      btnUp.className = 'btn btn-sm';
+      btnUp.innerHTML = '▲';
+      btnUp.title = 'Mover para cima';
+      btnUp.onclick = function () {
+        Socket.send({ type: 'reorderSongs', fromIndex: idx, toIndex: idx - 1 });
+      };
+      actions.appendChild(btnUp);
+    }
+
+    // Botao Descer
+    if (idx < currentSongs.length - 1) {
+      var btnDown = document.createElement('button');
+      btnDown.type = 'button';
+      btnDown.className = 'btn btn-sm';
+      btnDown.innerHTML = '▼';
+      btnDown.title = 'Mover para baixo';
+      btnDown.onclick = function () {
+        Socket.send({ type: 'reorderSongs', fromIndex: idx, toIndex: idx + 1 });
+      };
+      actions.appendChild(btnDown);
+    }
+
+    // Botao Excluir
+    var btnDel = document.createElement('button');
+    btnDel.type = 'button';
+    btnDel.className = 'btn btn-sm btn-danger';
+    btnDel.innerHTML = '✕';
+    btnDel.title = 'Remover da sequência';
+    btnDel.onclick = function () {
+      if (confirm('Remover "' + song.name + '" da sequência?')) {
+        Socket.send({ type: 'removeSong', songId: song.id });
+      }
+    };
+    actions.appendChild(btnDel);
+
+    row.appendChild(actions);
+    el.appendChild(row);
+  });
+}
+
+function handleAddSong(e) {
+  if (e) e.preventDefault();
+  var nameIn = document.getElementById('song-name-input');
+  var keyIn = document.getElementById('song-key-input');
+  var bpmIn = document.getElementById('song-bpm-input');
+
+  var name = nameIn.value.trim();
+  if (!name) return;
+  var key = keyIn.value.trim();
+  var bpm = parseInt(bpmIn.value, 10) || null;
+
+  Socket.send({ type: 'addSong', name: name, key: key, bpm: bpm });
+  nameIn.value = '';
+  keyIn.value = '';
+  bpmIn.value = '';
+}
+
+// --------------------------------------------------------------------------
+// PEDIDOS DE AJUDA & LOG
+// --------------------------------------------------------------------------
 function renderHelpRequests() {
   var el = document.getElementById('requests');
   el.innerHTML = '';
@@ -843,6 +1592,198 @@ function renderHelpRequests() {
   }
 }
 
+function formatTime(iso) {
+  var d = new Date(iso);
+  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addLogLine(l) {
+  var d = document.createElement('div');
+  d.textContent = formatTime(l.at) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
+  var log = document.getElementById('log');
+  log.insertBefore(d, log.firstChild);
+}
+
+// --------------------------------------------------------------------------
+// CONTROLE E CONEXÃO DA MESA DE SOM (MOCK, AUTO SEARCH, MANUAL)
+// --------------------------------------------------------------------------
+var currentMixerModel = 'mock';
+var currentMixerIp = 'local';
+var currentConnMode = 'mock';
+var mixerInitialized = false;
+
+function getFriendlyMixerName(model) {
+  var m = (model || '').toLowerCase();
+  if (m === 'ui24r') return 'Soundcraft Ui24R';
+  if (m === 'x32') return 'Behringer X32 / M32';
+  if (m === 'xair') return 'Behringer X Air';
+  if (m === 'mock') return 'Mesa Virtual (Mock)';
+  return model || 'Mesa';
+}
+
+function onMixerModelChanged(model) {
+  currentMixerModel = model;
+  var name = getFriendlyMixerName(model);
+  var label = document.getElementById('selected-mixer-name-label');
+  if (label) label.textContent = name;
+
+  if (model === 'mock') {
+    setConnectionMode('mock');
+  } else {
+    var ipInput = document.getElementById('input-manual-ip');
+    if (ipInput && (!ipInput.value || ipInput.value === 'local' || ipInput.value === 'Local')) {
+      ipInput.value = model === 'ui24r' ? '10.10.1.1' : '192.168.1.50';
+    }
+    // Ao selecionar uma mesa física, abre as opções dando destaque para busca automática
+    if (currentConnMode === 'mock') {
+      setConnectionMode('auto');
+    }
+  }
+}
+
+function setConnectionMode(mode) {
+  currentConnMode = mode;
+  var modes = ['mock', 'auto', 'manual'];
+
+  modes.forEach(function (m) {
+    var card = document.getElementById('opt-card-' + m);
+    var radio = document.getElementById('radio-conn-' + m);
+    var panel = document.getElementById('panel-conn-' + m);
+
+    if (card) {
+      if (m === mode) card.classList.add('selected');
+      else card.classList.remove('selected');
+    }
+    if (radio) radio.checked = (m === mode);
+    if (panel) panel.style.display = (m === mode ? 'block' : 'none');
+  });
+}
+
+function showMixerStatus(msg, color) {
+  var el = document.getElementById('mixer-save-indicator');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || 'var(--accent)';
+  setTimeout(function () {
+    if (el.textContent === msg) el.textContent = '';
+  }, 5000);
+}
+
+function applyMixerConnection(mode, explicitModel, explicitIp) {
+  var select = document.getElementById('select-mixer-model');
+  var model = explicitModel || (select ? select.value : 'mock');
+  var ip = explicitIp;
+
+  if (mode === 'mock') {
+    model = 'mock';
+    ip = 'local';
+  } else if (mode === 'manual') {
+    if (!ip) {
+      var ipInput = document.getElementById('input-manual-ip');
+      ip = ipInput ? ipInput.value.trim() : '';
+    }
+    if (!ip) {
+      alert('Por favor, digite o endereço IP da mesa.');
+      return;
+    }
+  }
+
+  showMixerStatus('Conectando à mesa...', 'var(--accent)');
+
+  fetch('/api/mixer/connect', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: model, ip: ip })
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (data) {
+    if (data.ok) {
+      showMixerStatus('✅ Conectado à ' + getFriendlyMixerName(model) + ' (' + ip + ')!', 'var(--ok)');
+      refreshStatus();
+    } else {
+      showMixerStatus('❌ Erro: ' + (data.error || 'Falha ao conectar'), 'var(--danger)');
+    }
+  })
+  .catch(function (err) {
+    showMixerStatus('❌ Erro de conexão: ' + err.message, 'var(--danger)');
+  });
+}
+
+function performMixerScan() {
+  var btn = document.getElementById('btn-scan-network');
+  var indicator = document.getElementById('scan-loading-indicator');
+  var feedback = document.getElementById('scan-feedback');
+  var list = document.getElementById('scan-results-list');
+
+  if (btn) btn.disabled = true;
+  if (indicator) indicator.style.display = 'inline-block';
+  if (feedback) feedback.textContent = 'Varrendo IPs da rede local (sub-redes Wi-Fi/Ethernet e 10.10.1.1)...';
+  if (list) list.innerHTML = '';
+
+  fetch('/api/mixer/scan')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (btn) btn.disabled = false;
+      if (indicator) indicator.style.display = 'none';
+
+      if (!data.ok) {
+        if (feedback) feedback.textContent = '❌ Erro na varredura: ' + (data.error || 'Erro desconhecido');
+        return;
+      }
+
+      if (!data.mixers || data.mixers.length === 0) {
+        if (feedback) {
+          feedback.innerHTML = '⚠️ Nenhuma mesa encontrada após varrer <strong>' + data.scannedCount + '</strong> endereços IP.<br>' +
+            'Certifique-se de que o computador está conectado na mesma rede (Wi-Fi ou cabo) da mesa. ' +
+            'Você também pode usar a opção <strong>3. Digitar IP manualmente</strong>.';
+        }
+        return;
+      }
+
+      if (feedback) {
+        feedback.innerHTML = '✅ Encontrada(s) <strong>' + data.mixers.length + '</strong> mesa(s) na rede (' + data.scannedCount + ' IPs varridos):';
+      }
+
+      data.mixers.forEach(function (m) {
+        var card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.padding = '8px 12px';
+        card.style.background = 'var(--surface)';
+        card.style.border = '1px solid var(--border)';
+        card.style.borderRadius = '6px';
+        card.style.gap = '10px';
+
+        var info = document.createElement('div');
+        info.innerHTML = '<strong>' + m.name + '</strong> <span style="color:var(--accent);font-size:13px;margin-left:6px">IP: <code>' + m.ip + '</code></span>';
+        card.appendChild(info);
+
+        var btnConn = document.createElement('button');
+        btnConn.className = 'btn btn-primary btn-sm';
+        btnConn.textContent = 'Conectar neste IP';
+        btnConn.onclick = function () {
+          var sel = document.getElementById('select-mixer-model');
+          if (sel) sel.value = m.model;
+          var manualIn = document.getElementById('input-manual-ip');
+          if (manualIn) manualIn.value = m.ip;
+          applyMixerConnection('manual', m.model, m.ip);
+        };
+        card.appendChild(btnConn);
+
+        list.appendChild(card);
+      });
+    })
+    .catch(function (err) {
+      if (btn) btn.disabled = false;
+      if (indicator) indicator.style.display = 'none';
+      if (feedback) feedback.textContent = '❌ Erro de conexão com o servidor ao varrer: ' + err.message;
+    });
+}
+
+// --------------------------------------------------------------------------
+// WEBSOCKET EVENTS
+// --------------------------------------------------------------------------
 Socket.on('help', function (m) {
   reqs[m.request.id] = m.request;
   renderHelpRequests();
@@ -856,19 +1797,70 @@ Socket.on('helpUpdate', function (m) {
   }
 });
 
-function formatTime(iso) {
-  var d = new Date(iso);
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-}
+Socket.on('log', function (m) {
+  addLogLine(m.line);
+});
 
-function addLogLine(l) {
-  var d = document.createElement('div');
-  d.textContent = formatTime(l.at) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
-  var log = document.getElementById('log');
-  log.insertBefore(d, log.firstChild);
-}
+Socket.on('sessions', function (m) {
+  if (m && m.sessions) {
+    renderSessionsList(m.sessions);
+  }
+});
 
-Socket.on('log', function (m) { addLogLine(m.line); });
+Socket.on('song', function (s) {
+  currentPlayingSong = s && s.id ? s : (s && s.name && s.name !== '—' ? s : null);
+  var badge = document.getElementById('current-song-badge');
+  if (badge) {
+    if (currentPlayingSong && currentPlayingSong.name && currentPlayingSong.name !== '—') {
+      badge.textContent = 'Tocando: ' + currentPlayingSong.name + (currentPlayingSong.key ? ' (' + currentPlayingSong.key + ')' : '') + (currentPlayingSong.bpm ? ' · ' + currentPlayingSong.bpm + ' BPM' : '');
+      badge.style.color = 'var(--accent)';
+    } else {
+      badge.textContent = 'Tocando: Nenhuma';
+      badge.style.color = 'var(--text-2)';
+    }
+  }
+  renderSongsList();
+});
+
+Socket.on('songs', function (m) {
+  if (m && m.songs) {
+    currentSongs = m.songs;
+    renderSongsList();
+  }
+});
+
+Socket.on('mixer', function (m) {
+  var pill = document.getElementById('status-pill');
+  if (pill) {
+    pill.className = m.connected ? 'dot' : 'dot off';
+    pill.textContent = m.connected ? '● Mesa conectada' : '● Mesa desconectada';
+  }
+  var statusDot = document.getElementById('mixer-connected-dot');
+  if (statusDot) {
+    statusDot.className = m.connected ? 'dot' : 'dot off';
+    statusDot.textContent = m.connected ? '● Conectada' : '● Desconectada';
+  }
+  if (m.model) {
+    var rawModel = m.model.toLowerCase();
+    currentMixerModel = rawModel;
+    document.getElementById('mixer-name-display').textContent = getFriendlyMixerName(rawModel);
+
+    var sel = document.getElementById('select-mixer-model');
+    if (sel && document.activeElement !== sel) {
+      sel.value = rawModel;
+    }
+    var label = document.getElementById('selected-mixer-name-label');
+    if (label) label.textContent = getFriendlyMixerName(rawModel);
+  }
+  if (m.ip) {
+    currentMixerIp = m.ip;
+    document.getElementById('mixer-ip-display').textContent = 'IP: ' + m.ip;
+    var manualIn = document.getElementById('input-manual-ip');
+    if (manualIn && document.activeElement !== manualIn && (!manualIn.value || manualIn.value === 'local')) {
+      if (currentMixerModel !== 'mock') manualIn.value = m.ip;
+    }
+  }
+});
 
 var historyLoaded = false;
 function refreshStatus() {
@@ -877,11 +1869,55 @@ function refreshStatus() {
     .then(function (s) {
       document.getElementById('musician-urls').innerHTML = s.musicianUrls.join('<br>');
       document.getElementById('tech-urls').innerHTML = s.techUrls.join('<br>');
-      document.getElementById('connected-count').textContent = s.connectedCount;
-      document.getElementById('people-list').innerHTML = s.sessions.map(function (p) {
-        return '<div>' + p.person + ' · ' + p.instrument + ' · Aux ' + p.aux + '</div>';
-      }).join('');
-      document.getElementById('mixer-info').textContent = 'Mesa: ' + s.mixer.model + ' · ' + s.mixer.ip;
+      renderSessionsList(s.sessions || []);
+
+      var rawModel = (s.mixer.model || 'mock').toLowerCase();
+      currentMixerModel = rawModel;
+      currentMixerIp = s.mixer.ip || 'local';
+
+      document.getElementById('mixer-name-display').textContent = getFriendlyMixerName(rawModel);
+      document.getElementById('mixer-ip-display').textContent = 'IP: ' + (s.mixer.ip || 'Local');
+
+      var sel = document.getElementById('select-mixer-model');
+      if (sel && document.activeElement !== sel) {
+        sel.value = rawModel;
+      }
+      var label = document.getElementById('selected-mixer-name-label');
+      if (label) label.textContent = getFriendlyMixerName(rawModel);
+
+      var manualIn = document.getElementById('input-manual-ip');
+      if (manualIn && document.activeElement !== manualIn && (!manualIn.value || manualIn.value === 'local')) {
+        if (rawModel !== 'mock') manualIn.value = s.mixer.ip || '10.10.1.1';
+      }
+
+      if (!mixerInitialized) {
+        mixerInitialized = true;
+        if (rawModel === 'mock') {
+          setConnectionMode('mock');
+        } else {
+          setConnectionMode('manual');
+        }
+      }
+
+      var statusDot = document.getElementById('mixer-connected-dot');
+      if (statusDot) {
+        statusDot.className = s.mixer.connected ? 'dot' : 'dot off';
+        statusDot.textContent = s.mixer.connected ? '● Conectada' : '● Desconectada';
+      }
+
+      if (s.song && s.song.name && s.song.name !== '—') {
+        currentPlayingSong = s.song;
+        var badge = document.getElementById('current-song-badge');
+        if (badge) {
+          badge.textContent = 'Tocando: ' + s.song.name + (s.song.key ? ' (' + s.song.key + ')' : '') + (s.song.bpm ? ' · ' + s.song.bpm + ' BPM' : '');
+          badge.style.color = 'var(--accent)';
+        }
+      }
+      if (s.songs && (!currentSongs || currentSongs.length === 0)) {
+        currentSongs = s.songs;
+        renderSongsList();
+      }
+
       document.getElementById('readonly-notice').style.display = s.canEditConfig ? 'none' : 'block';
       if (!historyLoaded) {
         historyLoaded = true;
@@ -892,19 +1928,9 @@ function refreshStatus() {
     })
     .catch(function () {});
 }
+
 refreshStatus();
 setInterval(refreshStatus, 3000);
-
-Socket.on('mixer', function (m) {
-  var pill = document.getElementById('status-pill');
-  if (m.connected) {
-    pill.className = 'dot';
-    pill.textContent = '● Mesa conectada';
-  } else {
-    pill.className = 'dot off';
-    pill.textContent = '● Mesa desconectada';
-  }
-});
 
 Socket.connect();
 Socket.send({ type: 'hello', role: 'tech' });

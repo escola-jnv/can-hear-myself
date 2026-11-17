@@ -5,6 +5,8 @@ class Hub {
   constructor(server, onMessage) {
     this.wss = new WebSocketServer({ server });
     this.nextId = 1;
+    // Erros do servidor HTTP (ex.: porta ocupada) são tratados em server/index.js
+    this.wss.on('error', () => {});
     this.wss.on('connection', (ws, req) => {
       ws.id = this.nextId++;
       ws.userAgent = req && req.headers ? req.headers['user-agent'] : null;

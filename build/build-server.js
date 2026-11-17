@@ -14,9 +14,10 @@ const SEA_BLOB_FILE = path.join(CACHE_DIR, 'sea-prep.blob');
 const TEMP_EXE_FILE = path.join(CACHE_DIR, 'server.exe');
 
 const OUTPUT_TARGETS = [
-  path.join(ROOT, 'can-hear-myself.exe'),
-  path.join(ROOT, 'desktop', 'src-tauri', 'binaries', 'chm-server-x86_64-pc-windows-msvc.exe'),
-  path.join(ROOT, 'desktop', 'src-tauri', 'binaries', 'chm-server.exe'),
+  { path: path.join(ROOT, 'can-hear-myself.exe'), gui: true },
+  { path: path.join(ROOT, 'can-hear-myself-cli.exe'), gui: false },
+  { path: path.join(ROOT, 'desktop', 'src-tauri', 'binaries', 'chm-server-x86_64-pc-windows-msvc.exe'), gui: false },
+  { path: path.join(ROOT, 'desktop', 'src-tauri', 'binaries', 'chm-server.exe'), gui: false },
 ];
 
 const MIME_TYPES = {
@@ -114,21 +115,43 @@ async function build() {
   });
   console.log('  -> Injeção concluída com sucesso!\n');
 
-  // 5. Copiar executável para os destinos
-  console.log('[5/5] Distribuindo executável gerado...');
+  // 5. Copiar executável para os destinos e configurar subsistema GUI/Console
+  console.log('[5/5] Distribuindo executáveis gerados e ajustando subsistemas PE...');
   for (const target of OUTPUT_TARGETS) {
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.copyFileSync(TEMP_EXE_FILE, target);
-    const sizeMb = (fs.statSync(target).size / (1024 * 1024)).toFixed(2);
-    console.log(`  -> ${path.relative(ROOT, target)} (${sizeMb} MB)`);
+    fs.mkdirSync(path.dirname(target.path), { recursive: true });
+    fs.copyFileSync(TEMP_EXE_FILE, target.path);
+
+    if (target.gui) {
+      setExecutableSubsystem(target.path, 2); // 2 = IMAGE_SUBSYSTEM_WINDOWS_GUI
+    }
+
+    const sizeMb = (fs.statSync(target.path).size / (1024 * 1024)).toFixed(2);
+    const modeDesc = target.gui ? 'Windows GUI (sem janela de terminal)' : 'Console CUI';
+    console.log(`  -> ${path.relative(ROOT, target.path)} (${sizeMb} MB) [${modeDesc}]`);
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-  console.log(`\n=== Executável gerado com sucesso em ${elapsed}s! ===`);
-  console.log('\nPara executar diretamente:');
+  console.log(`\n=== Executáveis gerados com sucesso em ${elapsed}s! ===`);
+  console.log('\nPara executar o aplicativo nativo (sem terminal, abre janela direto):');
   console.log('  .\\can-hear-myself.exe');
-  console.log('Ou com opções personalizadas:');
-  console.log('  .\\can-hear-myself.exe --port 3000 --mixer ui24r --ip 10.10.1.1\n');
+  console.log('\nPara executar em modo terminal com logs visíveis:');
+  console.log('  .\\can-hear-myself-cli.exe --port 3000 --mixer ui24r\n');
+}
+
+/**
+ * Altera o subsistema no cabeçalho PE (Portable Executable) do executável Windows.
+ * Subsystem = 2 (IMAGE_SUBSYSTEM_WINDOWS_GUI): o Windows não cria terminal ao clicar no .exe.
+ * Subsystem = 3 (IMAGE_SUBSYSTEM_WINDOWS_CUI): modo console tradicional.
+ */
+function setExecutableSubsystem(exePath, subsystem) {
+  const buf = fs.readFileSync(exePath);
+  const peOffset = buf.readUInt32LE(0x3C);
+  if (buf.toString('ascii', peOffset, peOffset + 4) !== 'PE\0\0') {
+    throw new Error(`Assinatura PE inválida no arquivo ${exePath}`);
+  }
+  const subsystemOffset = peOffset + 24 + 68;
+  buf.writeUInt16LE(subsystem, subsystemOffset);
+  fs.writeFileSync(exePath, buf);
 }
 
 build().catch((err) => {

@@ -40,9 +40,8 @@ class Mix {
       return { ok: false, reason: 'limite', group: groupId };
     }
 
+    // Regra 1: Mudar o master do grupo NÃO altera o volume de cada peça (st.channels)
     st.groups[groupId] = step;
-    if (!st.channels) st.channels = {};
-    for (const ch of group.channels) st.channels[ch] = step;
     for (const t of targets) {
       const db = t.db === null ? null : Math.min(t.db, max);
       await this.driver.setAuxSend(aux, t.ch, db);
