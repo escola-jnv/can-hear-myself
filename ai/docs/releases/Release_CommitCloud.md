@@ -1,22 +1,15 @@
-# v0.2.0 — Palco Afinado
+# v0.2.1 — Palco Afinado
 
-O Painel do Técnico agora abre sozinho e mostra tudo o que está acontecendo no palco.
+Configuração de canais por grupo centralizada, autoconexão da mesa e melhorias na inicialização.
 
 ## ✨ Novidades
-- **[TÉCNICO] Painel do Técnico:** abre sozinho ao iniciar e mostra os endereços para músicos e técnico, quantas pessoas estão conectadas e em qual aparelho.
-- **[TÉCNICO] Mapeamento de Canais:** nomear cada canal da mesa, montar grupos e saídas pelo painel.
-- **[MÚSICO & TÉCNICO] Repertório:** cadastro e ordem das músicas no painel; ao trocar a música, todos veem nome, tom e BPM.
-- **[TÉCNICO] Mesa de Som:** busca automática da mesa na rede e conexão facilitada por modal.
-- **[MÚSICO] App do Músico:** botão Salvar: a sua mix volta sozinha na próxima vez.
+- **[TÉCNICO] Painel do Técnico:** organização dos canais pertencentes a cada grupo agora configurada diretamente na aba Grupos, com visualização direta e sem conflitos.
 
 ## 🔧 Melhorias
-- **[MÚSICO] App do Músico:** ícones dos instrumentos e ajuste de cada peça da bateria; app bem mais leve no celular.
-- **[MÚSICO & TÉCNICO] Pedido de Ajuda:** o técnico marca o pedido como resolvido e o botão do músico volta ao normal.
+- **[TÉCNICO] Servidor:** tela de inicialização com carregamento dos passos da rede, geração de IPs e autoconexão facilitada.
 
 ## 🐛 Correções
-- **[TÉCNICO] Servidor:** o programa não fecha mais sozinho quando já existe outro aberto; erros ficam registrados.
-- **[TÉCNICO] Segurança:** só o computador do servidor pode trocar a mesa ou o mapeamento de canais.
-- **[MÚSICO] App do Músico:** sem mix salva, tudo começa no nível 3, inclusive clique e talkback.
+- **[TÉCNICO] Mesa de Som:** correção no reconhecimento de mesa salva ao iniciar via parâmetros e na busca automática na rede local.
 
 ## 📥 Como usar (Apenas o Executável)
 1. Baixe o `can-hear-myself.exe` abaixo e coloque numa pasta (ex.: `C:\CanHearMyself`).

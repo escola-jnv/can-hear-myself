@@ -1,0 +1,35 @@
+{
+  "version": "0.2.1",
+  "name": "Palco Afinado",
+  "date": "2026-11-17",
+  "highlights": [
+    "Configuração simplificada dos canais por grupo diretamente na aba Grupos",
+    "Inicialização rápida com detecção automática e geração dos links e IPs"
+  ],
+  "items": [
+    {
+      "area": "Painel do Técnico",
+      "audience": "[TÉCNICO]",
+      "category": "Feature Melhora",
+      "text": "Organização dos canais por grupo centralizada na aba Grupos, com visualização direta e sem conflitos na tabela de canais."
+    },
+    {
+      "area": "Servidor",
+      "audience": "[TÉCNICO]",
+      "category": "Correção de Bug",
+      "text": "Reconhecimento correto da mesa salva quando o servidor é iniciado com parâmetros de linha de comando."
+    },
+    {
+      "area": "Painel do Técnico",
+      "audience": "[TÉCNICO]",
+      "category": "Feature Melhora",
+      "text": "Tela de inicialização com carregamento visual dos passos de rede e atalhos rápidos para copiar IPs."
+    },
+    {
+      "area": "Mesa de Som",
+      "audience": "[TÉCNICO]",
+      "category": "Correção de Bug",
+      "text": "Aprimoramento da varredura na rede local e autoconexão da mesa de som."
+    }
+  ]
+}

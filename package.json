@@ -1,6 +1,6 @@
 {
   "name": "can-hear-myself",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Retorno de fone controlado pelo celular, integrado ao Proskë",
   "main": "server/index.js",
   "type": "commonjs",
