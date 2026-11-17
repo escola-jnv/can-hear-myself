@@ -10,7 +10,8 @@
     "mock": "node server/index.js --mixer mock",
     "test": "node --test",
     "icons": "node build/gen-icons.js",
-    "build:exe": "node build/build-server.js"
+    "build:exe": "node build/build-server.js",
+    "release": "node build/release.js"
   },
   "engines": {
     "node": ">=20"

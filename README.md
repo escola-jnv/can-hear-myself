@@ -2,6 +2,11 @@
 
 Cada músico controla a própria mix de fone pelo celular. Servidor local no PC da igreja, integrado ao Proskë.
 
+> 📥 **Quer apenas o programa para rodar no Windows?**  
+> 👉 [**Clique aqui para Baixar can-hear-myself.exe (Versão Mais Recente)**](https://github.com/escola-jnv/can-hear-myself/releases/latest/download/can-hear-myself.exe)  
+> *(Não precisa instalar Node.js nem baixar o código — basta baixar e dar dois cliques!)*  
+> Ver todas as versões na [página de Releases](https://github.com/escola-jnv/can-hear-myself/releases).
+
 ## Usar na igreja (Windows)
 
 1. Dê dois cliques em `can-hear-myself.exe` (não precisa instalar Node).
@@ -24,7 +29,8 @@ npm install
 copy config\example.config.json config\app.config.json
 npm run mock        # servidor com a mesa virtual
 npm test            # testes
-npm run build:exe   # gera o can-hear-myself.exe
+npm run build:exe   # gera o can-hear-myself.exe localmente
+npm run release     # gera a tag e dispara a release no GitHub com o .exe
 ```
 
 - Músicos: `http://IP-DO-PC:3000`

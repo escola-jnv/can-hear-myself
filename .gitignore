@@ -10,3 +10,4 @@ server/embedded-assets.js
 *.log
 build/*.txt
 _to_delete/
+*.exe
