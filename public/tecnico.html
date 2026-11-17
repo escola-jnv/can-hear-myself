@@ -616,9 +616,283 @@
     color: var(--text);
   }
   .notice { font-size:14px; color:var(--accent); margin:0 16px 12px; }
+
+  /* OVERLAY DE INICIALIZAÇÃO / LOADING DO EXECUTÁVEL */
+  .startup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(14, 17, 22, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+  }
+  .startup-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .startup-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    max-width: 520px;
+    width: 100%;
+    padding: 32px 28px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .startup-header .startup-logo {
+    font-size: 42px;
+    margin-bottom: 6px;
+    display: inline-block;
+    animation: logoPulse 2s infinite ease-in-out;
+  }
+  @keyframes logoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .startup-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .startup-subtitle {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--text-2);
+  }
+  .startup-scanner-container {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin: 4px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .startup-radar-pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    opacity: 0.7;
+    animation: radarPulse 2s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  @keyframes radarPulse {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+  .startup-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(245, 165, 36, 0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .startup-status-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    text-align: left;
+  }
+  .startup-status-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .startup-status-detail {
+    font-size: 13px;
+    color: var(--text-2);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  .startup-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+  .startup-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .startup-step-item.active {
+    background: rgba(245, 165, 36, 0.08);
+    border-color: rgba(245, 165, 36, 0.3);
+  }
+  .startup-step-item.done {
+    background: rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+  .startup-step-item .step-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .startup-step-item.active .step-icon {
+    background: var(--accent);
+    color: #0E1116;
+  }
+  .startup-step-item.done .step-icon {
+    background: var(--ok);
+    color: #0E1116;
+  }
+  .startup-step-item .step-content {
+    flex: 1;
+  }
+  .startup-step-item .step-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .startup-step-item .step-desc {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 2px;
+  }
+  .startup-ips-box {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .startup-ips-box .ip-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 3px 0;
+    flex-wrap: wrap;
+  }
+  .startup-ips-box .ip-label {
+    color: var(--text-2);
+    font-size: 11px;
+    min-width: 68px;
+  }
+  .startup-ips-box code {
+    color: var(--accent);
+    background: rgba(245, 165, 36, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    word-break: break-all;
+  }
+  .startup-footer {
+    margin-top: 2px;
+  }
+  .startup-skip-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 8px;
+    transition: color 0.15s;
+  }
+  .startup-skip-btn:hover {
+    color: var(--text);
+  }
 </style>
 </head>
 <body>
+
+<!-- OVERLAY DE INICIALIZAÇÃO / LOADING DO EXECUTÁVEL -->
+<div id="startup-overlay" class="startup-overlay">
+  <div class="startup-card">
+    <div class="startup-header">
+      <div class="startup-logo">🎚️</div>
+      <h1 class="startup-title">Can Hear Myself</h1>
+      <p class="startup-subtitle">Retorno de fone via celular & controle integrado</p>
+    </div>
+
+    <div class="startup-scanner-container">
+      <div class="startup-radar-pulse"></div>
+      <div class="startup-spinner"></div>
+    </div>
+
+    <div class="startup-status-box">
+      <div id="startup-status-title" class="startup-status-title">Iniciando sistema...</div>
+      <div id="startup-status-detail" class="startup-status-detail">Conectando interface e serviços locais...</div>
+    </div>
+
+    <div class="startup-steps">
+      <div id="step-item-1" class="startup-step-item active">
+        <div class="step-icon">1</div>
+        <div class="step-content">
+          <div class="step-title">Interface e Inicialização</div>
+          <div class="step-desc" id="step-desc-1">Carregando painel e abrindo aplicativo...</div>
+        </div>
+      </div>
+
+      <div id="step-item-2" class="startup-step-item">
+        <div class="step-icon">2</div>
+        <div class="step-content">
+          <div class="step-title">Endereços de Rede Gerados</div>
+          <div class="step-desc" id="step-desc-2">Aguardando geração dos IPs...</div>
+          <div id="startup-ips-box" class="startup-ips-box" style="display:none">
+            <div class="ip-row"><span class="ip-label">📱 Celulares:</span> <code id="startup-musician-url">—</code></div>
+            <div class="ip-row"><span class="ip-label">🎛️ Técnico:</span> <code id="startup-tech-url">—</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="step-item-3" class="startup-step-item">
+        <div class="step-icon">3</div>
+        <div class="step-content">
+          <div class="step-title">Conexão com a Mesa</div>
+          <div class="step-desc" id="step-desc-3">Verificando configuração de rede...</div>
+        </div>
+      </div>
+
+      <div id="step-item-4" class="startup-step-item">
+        <div class="step-icon">4</div>
+        <div class="step-content">
+          <div class="step-title">Painel do Técnico</div>
+          <div class="step-desc" id="step-desc-4">Aguardando inicialização dos serviços...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="startup-footer">
+      <button type="button" class="startup-skip-btn" onclick="dismissStartupOverlay(true)">Abrir painel diretamente</button>
+    </div>
+  </div>
+</div>
 
 <header class="tech-header">
   <div class="tech-title">
@@ -1113,6 +1387,15 @@
 
 <script src="js/socket.js"></script>
 <script>
+var DEFAULT_AUXES = [
+  { id: 1, name: 'DRUM' },
+  { id: 2, name: 'BASS' },
+  { id: 3, name: 'GUITARRA' },
+  { id: 4, name: 'VIOLAO' },
+  { id: 5, name: 'VOZ 1' },
+  { id: 6, name: 'VOZ 2' },
+  { id: 7, name: 'KEYS' }
+];
 var currentConfig = {
   levels: [],
   groups: [],
@@ -1148,6 +1431,9 @@ function loadConfig() {
       currentConfig = cfg;
       if (!currentConfig.channelNames) currentConfig.channelNames = {};
       if (!currentConfig.fixed) currentConfig.fixed = { click: { name: 'Clique', channels: [21] }, talkback: { name: 'Talkback', channels: [7] } };
+      if (!currentConfig.auxes || currentConfig.auxes.length === 0) {
+        currentConfig.auxes = JSON.parse(JSON.stringify(DEFAULT_AUXES));
+      }
       renderChannelsTable();
       renderGroupsList();
       renderAuxesList();
@@ -1470,7 +1756,9 @@ function addNewAux() {
   (currentConfig.auxes || []).forEach(function (a) {
     if (a.id >= nextId) nextId = a.id + 1;
   });
-  var name = prompt('Nome da Auxiliar ' + nextId + ' (ex: Fone Guitarra):', 'Aux ' + nextId);
+  var defaultItem = DEFAULT_AUXES.find(function (d) { return d.id === nextId; });
+  var defaultName = defaultItem ? defaultItem.name : ('Aux ' + nextId);
+  var name = prompt('Nome da Auxiliar ' + nextId + ' (ex: Fone Guitarra):', defaultName);
   if (!name) return;
   if (!currentConfig.auxes) currentConfig.auxes = [];
   currentConfig.auxes.push({ id: nextId, name: name });
@@ -2725,6 +3013,7 @@ function refreshStatus() {
         renderSongsList();
       }
 
+      if (s.startup) renderStartupState(s.startup);
       document.getElementById('readonly-notice').style.display = s.canEditConfig ? 'none' : 'block';
       if (s.version) document.getElementById('app-version').textContent = 'v' + s.version + (s.releaseName ? ' · ' + s.releaseName : '');
       if (!historyLoaded) {
@@ -2736,6 +3025,123 @@ function refreshStatus() {
     })
     .catch(function () {});
 }
+
+var startupOverlayDismissed = false;
+
+function dismissStartupOverlay(force) {
+  if (startupOverlayDismissed) return;
+  startupOverlayDismissed = true;
+  var el = document.getElementById('startup-overlay');
+  if (el) {
+    if (force) {
+      el.classList.add('hidden');
+      setTimeout(function () { el.style.display = 'none'; }, 450);
+    } else {
+      setTimeout(function () {
+        el.classList.add('hidden');
+        setTimeout(function () { el.style.display = 'none'; }, 550);
+      }, 500);
+    }
+  }
+}
+
+function renderStartupState(state) {
+  if (!state) return;
+  if (startupOverlayDismissed) return;
+
+  if (state.phase === 'ready') {
+    var titleEl = document.getElementById('startup-status-title');
+    if (titleEl) titleEl.textContent = '✅ Tudo pronto! Bem-vindo.';
+    var s4 = document.getElementById('step-item-4');
+    if (s4) {
+      s4.className = 'startup-step-item done';
+      var icon = s4.querySelector('.step-icon');
+      if (icon) icon.textContent = '✓';
+      var d4 = document.getElementById('step-desc-4');
+      if (d4) d4.textContent = 'Painel liberado.';
+    }
+    dismissStartupOverlay(false);
+    return;
+  }
+
+  var titleEl = document.getElementById('startup-status-title');
+  var detailEl = document.getElementById('startup-status-detail');
+  if (titleEl && state.message) titleEl.textContent = state.message;
+  if (detailEl && state.message) detailEl.textContent = state.message;
+
+  // Passo 1: Interface
+  var s1 = document.getElementById('step-item-1');
+  if (s1) {
+    s1.className = 'startup-step-item done';
+    var icon1 = s1.querySelector('.step-icon');
+    if (icon1) icon1.textContent = '✓';
+    var d1 = document.getElementById('step-desc-1');
+    if (d1) d1.textContent = 'Interface do executável carregada.';
+  }
+
+  // Passo 2: IPs
+  var s2 = document.getElementById('step-item-2');
+  if (state.step >= 2 && s2) {
+    var hasIps = state.musicianUrls && state.musicianUrls.length > 0;
+    s2.className = 'startup-step-item ' + (hasIps ? 'done' : 'active');
+    var icon2 = s2.querySelector('.step-icon');
+    if (icon2) icon2.textContent = hasIps ? '✓' : '2';
+    var d2 = document.getElementById('step-desc-2');
+    if (d2) d2.textContent = hasIps ? 'Endereços de acesso gerados com sucesso.' : 'Identificando interfaces de rede...';
+
+    if (hasIps) {
+      var ipsBox = document.getElementById('startup-ips-box');
+      if (ipsBox) ipsBox.style.display = 'block';
+      var mUrl = document.getElementById('startup-musician-url');
+      var tUrl = document.getElementById('startup-tech-url');
+      if (mUrl && state.primaryMusicianUrl) mUrl.textContent = state.primaryMusicianUrl;
+      if (tUrl && state.primaryTechUrl) tUrl.textContent = state.primaryTechUrl;
+    }
+  }
+
+  // Passo 3: Conexão com a mesa
+  var s3 = document.getElementById('step-item-3');
+  if (state.step >= 3 && s3) {
+    var isDone = state.mixer && state.mixer.connected;
+    s3.className = 'startup-step-item ' + (isDone ? 'done' : 'active');
+    var icon3 = s3.querySelector('.step-icon');
+    if (icon3) icon3.textContent = isDone ? '✓' : '3';
+    var descEl = document.getElementById('step-desc-3');
+    if (descEl) {
+      if (state.phase === 'scanning_mixer') {
+        descEl.textContent = 'Varrendo IPs da rede local em busca de mesas Soundcraft Ui / Behringer...';
+      } else if (isDone) {
+        descEl.textContent = 'Mesa conectada: ' + (state.mixer.name || state.mixer.model) + ' (' + state.mixer.ip + ')';
+      } else {
+        descEl.textContent = state.message || 'Conectando à mesa...';
+      }
+    }
+  }
+
+  // Passo 4: Painel liberado
+  var s4 = document.getElementById('step-item-4');
+  if (state.step >= 4 && s4) {
+    s4.className = 'startup-step-item done';
+    var icon4 = s4.querySelector('.step-icon');
+    if (icon4) icon4.textContent = '✓';
+    var d4 = document.getElementById('step-desc-4');
+    if (d4) d4.textContent = 'Painel liberado. Bom show!';
+    dismissStartupOverlay(false);
+  }
+}
+
+Socket.on('startup', function (msg) {
+  if (msg && msg.state) {
+    renderStartupState(msg.state);
+  }
+});
+
+fetch('/api/startup')
+  .then(function (r) { return r.json(); })
+  .then(function (state) {
+    renderStartupState(state);
+  })
+  .catch(function () {});
 
 refreshStatus();
 setInterval(refreshStatus, 3000);

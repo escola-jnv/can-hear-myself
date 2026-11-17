@@ -10,4 +10,13 @@ test('config carrega example e permite canais por grupo', () => {
   assert.strictEqual(config.channelNames['13'], 'KICK');
   assert.strictEqual(config.channelNames['21'], 'CLICK');
   assert.strictEqual(config.channelNames['7'], 'TALKBACK');
+  assert(Array.isArray(config.auxes), 'deve ter array de auxes');
+  assert.strictEqual(config.auxes.length, 7);
+  assert.strictEqual(config.auxes[0].name, 'DRUM');
+  assert.strictEqual(config.auxes[1].name, 'BASS');
+  assert.strictEqual(config.auxes[2].name, 'GUITARRA');
+  assert.strictEqual(config.auxes[3].name, 'VIOLAO');
+  assert.strictEqual(config.auxes[4].name, 'VOZ 1');
+  assert.strictEqual(config.auxes[5].name, 'VOZ 2');
+  assert.strictEqual(config.auxes[6].name, 'KEYS');
 });

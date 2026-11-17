@@ -125,6 +125,7 @@ async function setMixer(model, ip) {
   }
   config.mixer.model = model;
   if (ip !== undefined && ip !== null) config.mixer.ip = ip;
+  config.mixer.saved = true;
   saveAppConfig();
 
   driver = createDriver(config.mixer.model, config.mixer);
@@ -155,9 +156,109 @@ async function setMixer(model, ip) {
   };
 }
 
+function isVirtualInterface(name) {
+  const n = (name || '').toLowerCase();
+  return (
+    n.includes('vethernet') ||
+    n.includes('wsl') ||
+    n.includes('docker') ||
+    n.includes('vbox') ||
+    n.includes('virtual') ||
+    n.includes('hyper-v') ||
+    n.includes('vmware') ||
+    n.includes('tap') ||
+    n.includes('loopback')
+  );
+}
+
+function isLocalIp(ip) {
+  if (!ip) return false;
+  const clean = String(ip).replace(/^::ffff:/, '').trim();
+  if (clean === '127.0.0.1' || clean === '::1' || clean === 'localhost') return true;
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const iface of list || []) {
+      if (iface.address === clean) return true;
+    }
+  }
+  return false;
+}
+
 function isLocalRequest(req) {
   const ip = (req.socket && req.socket.remoteAddress) || '';
-  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  return isLocalIp(ip);
+}
+
+function getLocalNetworkAddresses() {
+  const ifaces = os.networkInterfaces();
+  const real = [];
+  const virtual = [];
+
+  for (const [name, list] of Object.entries(ifaces)) {
+    for (const info of list || []) {
+      if (info.family === 'IPv4' && !info.internal) {
+        if (isVirtualInterface(name)) {
+          virtual.push({ name, address: info.address });
+        } else {
+          real.push({ name, address: info.address });
+        }
+      }
+    }
+  }
+
+  // Prioriza interfaces físicas (Wi-Fi e Ethernet)
+  const sortedReal = real.sort((a, b) => {
+    const aWifi = /wi-fi|wlan|wireless|ethernet|eth/i.test(a.name) ? 0 : 1;
+    const bWifi = /wi-fi|wlan|wireless|ethernet|eth/i.test(b.name) ? 0 : 1;
+    return aWifi - bWifi;
+  });
+
+  return sortedReal.length > 0 ? sortedReal : virtual;
+}
+
+function localUrls() {
+  const addrs = getLocalNetworkAddresses();
+  return addrs.map((a) => `http://${a.address}:${config.port}`);
+}
+
+function getPrimaryTechUrl() {
+  const urls = localUrls();
+  if (urls.length > 0) {
+    return `${urls[0]}/tecnico.html`;
+  }
+  return `http://localhost:${config.port}/tecnico.html`;
+}
+
+function hasSavedMixerConfig() {
+  if (!config.mixer) return false;
+  const model = (config.mixer.model || '').toLowerCase();
+  // 'mock' é apenas modo de teste virtual, não conta como mesa física salva
+  if (!model || model === 'mock') return false;
+  return Boolean(config.mixer.saved === true || (config.mixer.ip && config.mixer.ip !== 'local'));
+}
+
+const startupState = {
+  phase: 'starting', // 'starting' | 'generating_ips' | 'scanning_mixer' | 'connecting_mixer' | 'ready'
+  step: 1,
+  totalSteps: 4,
+  message: 'Iniciando Can Hear Myself...',
+  techUrls: [],
+  musicianUrls: [],
+  primaryTechUrl: '',
+  primaryMusicianUrl: '',
+  mixer: {
+    model: config.mixer.model,
+    ip: config.mixer.ip,
+    name: config.mixer.model === 'mock' ? 'Mesa Virtual (Mock)' : config.mixer.model,
+    connected: false
+  },
+  hasSavedConfig: hasSavedMixerConfig()
+};
+
+function updateStartupState(updates) {
+  Object.assign(startupState, updates);
+  if (hub) {
+    hub.broadcast({ type: 'startup', state: startupState }, (c) => c.role === 'tech');
+  }
 }
 
 function parseDeviceFromUA(ua) {
@@ -196,6 +297,7 @@ function buildStatus(req) {
     help: help.open_(),
     log: log.recent.slice(-100),
     canEditConfig: req ? isLocalRequest(req) : false,
+    startup: startupState
   };
 }
 
@@ -314,6 +416,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (urlPath === '/api/startup') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(startupState));
+  }
+
   if (urlPath === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(buildStatus(req)));
@@ -360,6 +467,7 @@ hub = new Hub(server, async (ws, msg) => {
       if (setlist.current) hub.send(ws, { type: 'song', ...setlist.current });
       hub.send(ws, { type: 'songs', songs: setlist.songs() });
       if (ws.role === 'tech') {
+        hub.send(ws, { type: 'startup', state: startupState });
         hub.send(ws, { type: 'sessions', sessions: sessions.list() });
         hub.send(ws, { type: 'helpList', requests: help.open_() });
       }
@@ -501,13 +609,143 @@ hub = new Hub(server, async (ws, msg) => {
       hub.broadcast({ type: 'sessions', sessions: sessions.list() }, (c) => c.role !== 'musician');
       return;
   }
-});
+}, isLocalIp);
 
-function localUrls() {
-  const urls = [];
-  for (const list of Object.values(os.networkInterfaces())) for (const i of list || [])
-    if (i.family === 'IPv4' && !i.internal) urls.push(`http://${i.address}:${config.port}`);
-  return urls;
+async function runStartupRoutine() {
+  console.log('==================================================');
+  console.log(`  Can Hear Myself v${APP_VERSION} — ${RELEASE_NAME}`);
+  console.log('==================================================');
+
+  // Passo 1: Abrir interface mostrando loading de conectando, etc
+  updateStartupState({
+    phase: 'starting',
+    step: 1,
+    message: 'Iniciando interface e serviços...',
+  });
+
+  // Passo 2: Gerar os IPs do técnico e músico
+  const urls = localUrls();
+  const musicianUrls = urls.length > 0 ? urls : [`http://localhost:${config.port}`];
+  const techUrls = musicianUrls.map((u) => `${u}/tecnico.html`);
+  const primaryTechUrl = techUrls[0] || `http://localhost:${config.port}/tecnico.html`;
+  const primaryMusicianUrl = musicianUrls[0] || `http://localhost:${config.port}`;
+
+  updateStartupState({
+    phase: 'generating_ips',
+    step: 2,
+    message: 'Endereços de rede gerados.',
+    techUrls,
+    musicianUrls,
+    primaryTechUrl,
+    primaryMusicianUrl,
+  });
+
+  console.log(`Porta: ${config.port}`);
+  console.log('\nEndereços para acesso na rede local:');
+  for (const u of musicianUrls) {
+    console.log(`  Celulares: ${u}`);
+    console.log(`  Técnico:   ${u}/tecnico.html`);
+  }
+  console.log('==================================================\n');
+
+  // Já abre a interface dentro do executável no IP do técnico gerado imediatamente
+  openDashboard(primaryTechUrl);
+
+  // Passo 3: Fazer varredura da rede e conectar auto na mesa da rede (caso não tenha config salva)
+  const isSaved = hasSavedMixerConfig();
+  if (isSaved) {
+    console.log(`[startup] Carregando mesa salva: ${config.mixer.model} (${config.mixer.ip || 'local'})`);
+    updateStartupState({
+      phase: 'connecting_mixer',
+      step: 3,
+      message: `Conectando à mesa salva (${(config.mixer.model || '').toUpperCase()} @ ${config.mixer.ip || 'local'})...`,
+    });
+
+    try {
+      await driver.connect();
+      console.log(`[startup] Conectado à mesa salva: ${config.mixer.model}`);
+      updateStartupState({
+        mixer: {
+          model: config.mixer.model,
+          ip: config.mixer.ip,
+          name: config.mixer.model,
+          connected: driver.connected,
+        },
+        message: `Mesa ${(config.mixer.model || '').toUpperCase()} conectada com sucesso!`,
+      });
+    } catch (e) {
+      console.error(`[startup] Falha ao conectar na mesa salva: ${e.message}`);
+      updateStartupState({
+        message: `Aviso: Falha ao conectar na mesa salva (${e.message}). O painel continuará aberto.`,
+      });
+    }
+  } else {
+    // Caso não tenha config salva: varrer a rede e conectar automaticamente!
+    console.log('[startup] Nenhuma mesa salva detectada. Varrendo a rede em busca da mesa de som...');
+    updateStartupState({
+      phase: 'scanning_mixer',
+      step: 3,
+      message: 'Varrendo a rede em busca de mesas Soundcraft / Behringer...',
+    });
+
+    try {
+      const scanResult = await findMixer();
+      if (scanResult.mixers && scanResult.mixers.length > 0) {
+        const found = scanResult.mixers[0];
+        console.log(`[startup] Mesa encontrada na rede: ${found.name} (${found.ip})! Conectando automaticamente...`);
+        updateStartupState({
+          message: `Mesa encontrada na rede: ${found.name} (${found.ip})! Conectando...`,
+        });
+
+        config.mixer.saved = true;
+        await setMixer(found.model, found.ip);
+
+        updateStartupState({
+          mixer: {
+            model: found.model,
+            ip: found.ip,
+            name: found.name,
+            connected: driver.connected,
+          },
+          message: `Mesa ${found.name} conectada com sucesso!`,
+        });
+      } else {
+        console.log('[startup] Nenhuma mesa física encontrada na rede. Usando Mesa Virtual para demonstração.');
+        updateStartupState({
+          message: 'Nenhuma mesa encontrada na rede. Usando Mesa Virtual.',
+        });
+        await setMixer('mock', 'local');
+        updateStartupState({
+          mixer: {
+            model: 'mock',
+            ip: 'local',
+            name: 'Mesa Virtual (Mock)',
+            connected: true,
+          },
+        });
+      }
+    } catch (err) {
+      console.error('[startup] Erro na varredura:', err.message);
+      await setMixer('mock', 'local');
+      updateStartupState({
+        message: 'Mesa Virtual ativada.',
+        mixer: {
+          model: 'mock',
+          ip: 'local',
+          name: 'Mesa Virtual (Mock)',
+          connected: true,
+        },
+      });
+    }
+  }
+
+  // Passo 4: Já abrir a interface do técnico dentro desse exe (liberar tela e mostrar dashboard)
+  console.log('[startup] Concluído! Interface do técnico liberada.');
+  updateStartupState({
+    phase: 'ready',
+    step: 4,
+    message: 'Tudo pronto! Carregando painel do técnico...',
+  });
 }
 
 const isRunningDirectly = require.main === module
@@ -516,34 +754,17 @@ const isRunningDirectly = require.main === module
 
 if (isRunningDirectly) {
   server.listen(config.port, async () => {
-    console.log('==================================================');
-    console.log(`  Can Hear Myself v${APP_VERSION} — ${RELEASE_NAME}`);
-    console.log('==================================================');
-    console.log(`Mesa configurada: ${config.mixer.model} (${config.mixer.ip || 'local'})`);
-    console.log(`Porta: ${config.port}`);
-    console.log('\nEndereços para acesso na rede local:');
-    const urls = localUrls();
-    if (urls.length === 0) {
-      console.log(`  Local: http://localhost:${config.port}`);
-    } else {
-      for (const u of urls) {
-        console.log(`  Celulares: ${u}`);
-        console.log(`  Técnico:   ${u}/tecnico.html`);
-      }
-    }
-    console.log('==================================================\n');
-    openDashboard();
-    try {
-      await driver.connect();
-    } catch (e) {
-      console.error(`Falha ao conectar na mesa: ${e.message}`);
-    }
+    runStartupRoutine().catch((err) => {
+      console.error('[startup] Erro na rotina de inicialização:', err);
+      updateStartupState({ phase: 'ready', step: 4, message: 'Inicialização concluída com avisos.' });
+    });
   });
 }
 
-function openDashboard() {
+function openDashboard(customUrl) {
   if (process.argv.includes('--no-open') || process.argv.includes('--headless') || process.env.CHM_NO_OPEN || process.env.NODE_ENV === 'test' || process.argv.some(a => a.includes('--test'))) return;
-  const url = `http://localhost:${config.port}/tecnico.html`;
+  const url = customUrl || getPrimaryTechUrl();
+  console.log(`[app] Abrindo janela do aplicativo em: ${url}`);
   openAppWindow(url, {
     width: 1200,
     height: 800,
@@ -560,7 +781,7 @@ server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`\nA porta ${config.port} já está em uso: o servidor provavelmente já está aberto.`);
     console.error('Abrindo o painel do servidor que já está rodando...');
-    openDashboard();
+    openDashboard(getPrimaryTechUrl());
     if (process.platform === 'win32' && process.stdin.isTTY) {
       holdWindowAndExit(1);
     } else {
@@ -578,4 +799,4 @@ server.on('error', (err) => {
   }
 });
 
-module.exports = { server, setMixer, saveAppConfig };
+module.exports = { server, setMixer, saveAppConfig, runStartupRoutine, startupState };

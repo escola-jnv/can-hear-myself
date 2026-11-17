@@ -5,6 +5,15 @@
   var helpRequested = false;
 
   var INSTRUMENTS = ['Voz', 'Violão', 'Guitarra', 'Baixo', 'Bateria', 'Teclado', 'Outro'];
+  var DEFAULT_AUXES = [
+    { id: 1, name: 'DRUM' },
+    { id: 2, name: 'BASS' },
+    { id: 3, name: 'GUITARRA' },
+    { id: 4, name: 'VIOLAO' },
+    { id: 5, name: 'VOZ 1' },
+    { id: 6, name: 'VOZ 2' },
+    { id: 7, name: 'KEYS' }
+  ];
   var INSTRUMENT_ICONS = {
     'Voz': 'mic-vocal',
     'Violão': 'guitar',
@@ -120,8 +129,12 @@
     el.innerHTML = '';
     items.forEach(function (it) {
       var b = document.createElement('button');
-      b.textContent = it.label || it;
-      if (it.cls) b.className = it.cls;
+      if (it && it.html) {
+        b.innerHTML = it.html;
+      } else {
+        b.textContent = (it && it.label) ? it.label : it;
+      }
+      if (it && it.cls) b.className = it.cls;
       b.onclick = function () { onPick(it, b); };
       el.appendChild(b);
     });
@@ -170,9 +183,19 @@
   }
 
   function askAux() {
-    list($('auxes'), cfg.auxes.map(function (a) { return { label: a.name, id: a.id }; }), function (a, b) {
+    var rawList = (cfg && Array.isArray(cfg.auxes) && cfg.auxes.length > 0) ? cfg.auxes : DEFAULT_AUXES;
+    var items = rawList.map(function (a) {
+      var name = a.name ? a.name.trim() : '';
+      var hasCustomName = name && name.toLowerCase() !== ('aux ' + a.id);
+      var html = '<span class="ch-pill">Aux ' + a.id + '</span>' + (hasCustomName ? ' <span class="aux-name">' + name + '</span>' : '');
+      var label = hasCustomName ? ('Aux ' + a.id + ' (' + name + ')') : ('Aux ' + a.id);
+      return { id: a.id, name: name || ('Aux ' + a.id), label: label, html: html, cls: 'aux-btn' };
+    });
+    list($('auxes'), items, function (a, b) {
       who.aux = a.id;
-      if (b) b.textContent = 'Entrando em ' + a.label + '...';
+      if (b) {
+        b.innerHTML = '<span class="ch-pill">Aux ' + a.id + '</span> <span>Entrando em ' + a.name + '...</span>';
+      }
       join();
     });
     show('s-aux');
@@ -254,7 +277,10 @@
 
     $('who-icon').innerHTML = topIconSvg;
     $('who-name').textContent = who.person + ' · ' + who.instrument;
-    $('who-aux').textContent = 'Aux ' + who.aux;
+    var auxList = (cfg && Array.isArray(cfg.auxes) && cfg.auxes.length > 0) ? cfg.auxes : DEFAULT_AUXES;
+    var auxObj = auxList.find(function (a) { return a.id === who.aux; });
+    var auxCustomName = (auxObj && auxObj.name && auxObj.name.trim().toLowerCase() !== ('aux ' + who.aux)) ? (' · ' + auxObj.name) : '';
+    $('who-aux').textContent = 'Aux ' + who.aux + auxCustomName;
 
     // Linhas fixas (Master, Clique, Talkback)
     var fixed = $('fixed');
@@ -486,7 +512,12 @@
     Socket.connect();
     Socket.send({ type: 'hello', role: 'musician' });
     if (who && who.aux) {
-      $('again-text').textContent = who.person + ', ' + who.instrument + ', Aux ' + who.aux + '. Continuar?';
+      var auxList = (cfg && Array.isArray(cfg.auxes) && cfg.auxes.length > 0) ? cfg.auxes : DEFAULT_AUXES;
+      var auxObj = auxList.find(function (a) { return a.id === who.aux; });
+      var auxLabel = (auxObj && auxObj.name && auxObj.name.trim().toLowerCase() !== ('aux ' + who.aux))
+        ? ('Aux ' + who.aux + ' (' + auxObj.name + ')')
+        : ('Aux ' + who.aux);
+      $('again-text').textContent = who.person + ', ' + who.instrument + ', ' + auxLabel + '. Continuar?';
       $('again-yes').onclick = join;
       $('again-no').onclick = askPerson;
       show('s-again');

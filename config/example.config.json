@@ -14,10 +14,13 @@
   "maxDb": 0,
   "groupLimitBehavior": "stop",
   "auxes": [
-    { "id": 1, "name": "Aux 1" },
-    { "id": 2, "name": "Aux 2" },
-    { "id": 3, "name": "Aux 3" },
-    { "id": 4, "name": "Aux 4" }
+    { "id": 1, "name": "DRUM" },
+    { "id": 2, "name": "BASS" },
+    { "id": 3, "name": "GUITARRA" },
+    { "id": 4, "name": "VIOLAO" },
+    { "id": 5, "name": "VOZ 1" },
+    { "id": 6, "name": "VOZ 2" },
+    { "id": 7, "name": "KEYS" }
   ],
   "groups": [
     { "id": "baixo", "name": "Baixo", "color": "#A855F7", "icon": "bass", "channels": [1] },

@@ -36,6 +36,32 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
 }
 .list button.taken { opacity: .4; }
 
+.ch-pill {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.list button.aux-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 18px;
+}
+.list button.aux-btn .aux-name {
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+
 .btn-primary {
   background: var(--accent) !important;
   color: var(--bg) !important;
