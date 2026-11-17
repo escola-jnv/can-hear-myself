@@ -14,8 +14,35 @@ const { Help } = require('./core/help');
 const { Setlist } = require('./core/setlist');
 const ActivityLog = require('./core/activity-log');
 
-const PUBLIC = path.join(__dirname, '..', 'public');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.json': 'application/json' };
+let embeddedAssets = {};
+try { embeddedAssets = require('./embedded-assets'); } catch {}
+
+const TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.ico': 'image/x-icon'
+};
+
+function findPublicDir() {
+  const candidates = [
+    path.join(process.cwd(), 'public'),
+    path.join(path.dirname(process.execPath), 'public'),
+    path.join(__dirname, 'public'),
+    path.join(__dirname, '..', 'public')
+  ];
+  for (const c of candidates) {
+    try {
+      if (fs.existsSync(c) && fs.statSync(c).isDirectory()) return c;
+    } catch {}
+  }
+  return null;
+}
 
 const store = new Store();
 const driver = createDriver(config.mixer.model, config.mixer);
@@ -28,22 +55,93 @@ let hub;
 const log = new ActivityLog(store, (line) => hub && hub.broadcast({ type: 'log', line }, (ws) => ws.role !== 'musician'));
 
 const server = http.createServer((req, res) => {
+  // CORS basico para desenvolvimento
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+
   if (req.url === '/api/config') {
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', (chunk) => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (Array.isArray(data.groups)) config.groups = data.groups;
+          if (data.fixed && typeof data.fixed === 'object') config.fixed = data.fixed;
+          if (Array.isArray(data.auxes)) config.auxes = data.auxes;
+          if (data.channelNames && typeof data.channelNames === 'object') config.channelNames = data.channelNames;
+
+          const configDir = fs.existsSync(path.join(process.cwd(), 'config'))
+            ? path.join(process.cwd(), 'config')
+            : path.join(path.dirname(process.execPath), 'config');
+          fs.mkdirSync(configDir, { recursive: true });
+          const configFile = path.join(configDir, 'app.config.json');
+          fs.writeFileSync(configFile, JSON.stringify(config, null, 2), 'utf8');
+
+          if (hub) {
+            hub.broadcast({
+              type: 'configUpdate',
+              config: {
+                levels: config.levels,
+                groups: config.groups,
+                auxes: config.auxes,
+                fixed: config.fixed,
+                channelNames: config.channelNames || {}
+              }
+            });
+          }
+          log.add({ person: 'técnico', action: 'atualizou mapeamento de canais' });
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ ok: true }));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ ok: false, error: err.message }));
+        }
+      });
+      return;
+    }
+
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ levels: config.levels, groups: config.groups, auxes: config.auxes, fixed: config.fixed }));
+    return res.end(JSON.stringify({
+      levels: config.levels,
+      groups: config.groups,
+      auxes: config.auxes,
+      fixed: config.fixed,
+      channelNames: config.channelNames || {}
+    }));
   }
   if (req.url === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ mixer: { model: config.mixer.model, ip: config.mixer.ip, connected: driver.connected }, urls: localUrls(), sessions: sessions.list(), song: setlist.current, help: help.open_(), log: log.recent.slice(-50) }));
   }
   const rel = req.url === '/' ? '/index.html' : decodeURIComponent(req.url.split('?')[0]);
-  const file = path.normalize(path.join(PUBLIC, rel));
-  if (!file.startsWith(PUBLIC)) { res.writeHead(403); return res.end(); }
-  fs.readFile(file, (err, data) => {
-    if (err) { res.writeHead(404); return res.end('Não encontrado'); }
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
-    res.end(data);
-  });
+  const publicDir = findPublicDir();
+  if (publicDir) {
+    const file = path.normalize(path.join(publicDir, rel));
+    if (file.startsWith(publicDir) && fs.existsSync(file) && fs.statSync(file).isFile()) {
+      return fs.readFile(file, (err, data) => {
+        if (err) { res.writeHead(404); return res.end('Não encontrado'); }
+        res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
+        res.end(data);
+      });
+    }
+  }
+
+  // Fallback para arquivos estáticos embutidos no executável
+  const embedded = embeddedAssets[rel];
+  if (embedded) {
+    const buf = Buffer.isBuffer(embedded.data)
+      ? embedded.data
+      : Buffer.from(embedded.data, 'base64');
+    res.writeHead(200, { 'Content-Type': embedded.type || TYPES[path.extname(rel)] || 'application/octet-stream' });
+    return res.end(buf);
+  }
+
+  res.writeHead(404);
+  res.end('Não encontrado');
 });
 
 hub = new Hub(server, async (ws, msg) => {
@@ -130,9 +228,27 @@ function localUrls() {
 }
 
 server.listen(config.port, async () => {
-  console.log(`Can Hear Myself rodando. Mesa: ${config.mixer.model}`);
-  for (const u of localUrls()) console.log(`  Celulares: ${u}   Técnico: ${u}/tecnico.html`);
-  try { await driver.connect(); } catch (e) { console.error(`Falha ao conectar na mesa: ${e.message}`); }
+  console.log('==================================================');
+  console.log('  Can Hear Myself - Servidor Local');
+  console.log('==================================================');
+  console.log(`Mesa configurada: ${config.mixer.model} (${config.mixer.ip || 'local'})`);
+  console.log(`Porta: ${config.port}`);
+  console.log('\nEndereços para acesso na rede local:');
+  const urls = localUrls();
+  if (urls.length === 0) {
+    console.log(`  Local: http://localhost:${config.port}`);
+  } else {
+    for (const u of urls) {
+      console.log(`  Celulares: ${u}`);
+      console.log(`  Técnico:   ${u}/tecnico.html`);
+    }
+  }
+  console.log('==================================================\n');
+  try {
+    await driver.connect();
+  } catch (e) {
+    console.error(`Falha ao conectar na mesa: ${e.message}`);
+  }
 });
 
 module.exports = { server };

@@ -2,6 +2,19 @@
 
 Cada músico controla a própria mix de fone pelo celular. Servidor local no PC da igreja, integrado ao Proskë.
 
+## Rodar o executável Windows (.exe autônomo)
+
+Você pode rodar diretamente o executável independente (com Node embutido, sem precisar ter Node instalado no PC da igreja):
+
+```bash
+.\can-hear-myself.exe
+```
+
+Para gerar novamente o `.exe`:
+```bash
+npm run build:exe
+```
+
 ## Rodar em desenvolvimento (com mesa virtual)
 
 ```bash

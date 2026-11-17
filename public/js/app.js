@@ -50,6 +50,12 @@
   Socket.on('close', function () { $('offline').className = 'warn on'; });
   Socket.on('song', function (s) { $('song-name').textContent = s.name; $('song-meta').textContent = (s.key || '') + ' · ' + (s.bpm || '') + ' BPM'; if (navigator.vibrate) navigator.vibrate(200); });
   Socket.on('helpUpdate', function (m) { if (m.status === 'visto') alert('Técnico a caminho.'); });
+  Socket.on('configUpdate', function (m) {
+    if (m.config) {
+      cfg = m.config;
+      if (state && who && who.aux) renderMix();
+    }
+  });
 
   list($('reasons'), REASONS.map(function (r, i) { return { label: r, id: i + 1 }; }), function (r) { Socket.send({ type: 'help', reason: r.id }); $('help-sheet').className = 'sheet'; });
   $('help-btn').onclick = function () { $('help-sheet').className = 'sheet on'; };

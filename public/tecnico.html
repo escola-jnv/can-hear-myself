@@ -1,36 +1,863 @@
 <!doctype html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Técnico · Can Hear Myself</title>
-<link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/app.css"></head>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+  }
+  .tech-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tech-title {
+    font-size: 19px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin: 16px;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: calc(var(--radius) - 4px);
+    background: transparent;
+    color: var(--text-2);
+    font-weight: 500;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab-btn:hover {
+    color: var(--text);
+  }
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .badge {
+    background: var(--danger);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 99px;
+    font-weight: bold;
+  }
+  .tab-content {
+    display: none;
+    padding: 0 16px;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  input[type="text"], input[type="number"], select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+  }
+  input[type="color"] {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+  .btn:hover {
+    border-color: var(--text-2);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #111;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+  .btn-danger {
+    color: var(--danger);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+  }
+  .channel-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+  }
+  .channel-table th {
+    text-align: left;
+    font-size: 13px;
+    color: var(--text-2);
+    padding: 6px 12px;
+    font-weight: 500;
+  }
+  .channel-row {
+    background: var(--surface);
+  }
+  .channel-row td {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .channel-row td:first-child {
+    border-left: 1px solid var(--border);
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+    width: 70px;
+  }
+  .channel-row td:last-child {
+    border-right: 1px solid var(--border);
+    border-top-right-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+    width: 48px;
+    text-align: center;
+  }
+  .ch-pill {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-block;
+  }
+  .group-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .save-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 20;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+  }
+  .save-status {
+    font-size: 14px;
+    color: var(--ok);
+    font-weight: 500;
+  }
+  .group-item, .aux-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-item:last-child, .aux-item:last-child {
+    border-bottom: none;
+  }
+</style>
+</head>
 <body>
-<section class="screen on">
-  <h1>Pedidos de ajuda</h1>
-  <div id="requests" class="list"><p style="color:var(--text-2)">Nenhum pedido.</p></div>
-  <h1 style="margin-top:24px">Atividade</h1>
-  <div id="log" style="font-size:14px;color:var(--text-2)"></div>
-</section>
+
+<header class="tech-header">
+  <div class="tech-title">
+    <span>🎚️ Can Hear Myself</span>
+    <span style="font-size:14px;color:var(--text-2);font-weight:normal">· Técnico</span>
+  </div>
+  <div id="status-pill" class="dot">● Conectando...</div>
+</header>
+
+<nav class="tabs">
+  <button id="tab-btn-monitor" class="tab-btn active" onclick="switchTab('monitor')">
+    🔔 Monitoramento <span id="badge-requests" class="badge" style="display:none">0</span>
+  </button>
+  <button id="tab-btn-channels" class="tab-btn" onclick="switchTab('channels')">
+    🎛️ Canais & Instrumentos
+  </button>
+  <button id="tab-btn-groups" class="tab-btn" onclick="switchTab('groups')">
+    🏷️ Grupos
+  </button>
+  <button id="tab-btn-auxes" class="tab-btn" onclick="switchTab('auxes')">
+    🎧 Saídas Auxiliares
+  </button>
+</nav>
+
+<!-- ABA 1: MONITORAMENTO -->
+<main id="tab-monitor" class="tab-content active">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Pedidos de ajuda</h2>
+    </div>
+    <div id="requests" class="list">
+      <p style="color:var(--text-2)">Nenhum pedido aberto.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Atividade recente</h2>
+      <button class="btn" style="padding:4px 8px;font-size:13px;" onclick="document.getElementById('log').innerHTML=''">Limpar</button>
+    </div>
+    <div id="log" style="font-size:14px;color:var(--text-2);max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+</main>
+
+<!-- ABA 2: CANAIS & INSTRUMENTOS -->
+<main id="tab-channels" class="tab-content">
+  <div class="toolbar">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:14px;color:var(--text-2)">Canais visíveis:</span>
+      <select id="channel-count-select" onchange="changeChannelCount(this.value)">
+        <option value="16">1 a 16 canais</option>
+        <option value="24" selected>1 a 24 canais</option>
+        <option value="32">1 a 32 canais</option>
+        <option value="48">1 a 48 canais</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="addCustomChannel()">+ Adicionar Canal</button>
+      <button class="btn btn-primary" onclick="saveAllConfig()">💾 Salvar Mapeamento</button>
+    </div>
+  </div>
+
+  <p style="font-size:14px;color:var(--text-2);margin-bottom:12px">
+    Mapeie cada canal físico da mesa para o respectivo instrumento e escolha a qual grupo ele pertence no aplicativo dos músicos.
+  </p>
+
+  <table class="channel-table">
+    <thead>
+      <tr>
+        <th>Canal</th>
+        <th>Nome do Instrumento</th>
+        <th>Grupo / Destino</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="channel-rows">
+      <!-- Linhas geradas via JavaScript -->
+    </tbody>
+  </table>
+</main>
+
+<!-- ABA 3: GRUPOS -->
+<main id="tab-groups" class="tab-content">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Grupos de Instrumentos</h2>
+      <button class="btn btn-primary" onclick="addNewGroup()">+ Novo Grupo</button>
+    </div>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:14px">
+      Estes são os controles que aparecem na tela do celular de cada músico.
+    </p>
+    <div id="groups-list">
+      <!-- Lista de grupos -->
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Canais Fixos Globais</h2>
+    </div>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:14px">
+      Canais fixos especiais que têm controle individual dedicado no celular de todos os músicos.
+    </p>
+    <div class="group-item">
+      <strong style="width:120px">Clique (Metrônomo):</strong>
+      <input type="text" id="fixed-click-channels" placeholder="Ex: 15" style="width:140px" onchange="updateFixedFromInputs()">
+      <span style="font-size:13px;color:var(--text-2)">Canais separados por vírgula</span>
+    </div>
+    <div class="group-item">
+      <strong style="width:120px">Talkback:</strong>
+      <input type="text" id="fixed-talkback-channels" placeholder="Ex: 16" style="width:140px" onchange="updateFixedFromInputs()">
+      <span style="font-size:13px;color:var(--text-2)">Canais separados por vírgula</span>
+    </div>
+  </div>
+</main>
+
+<!-- ABA 4: SAÍDAS AUXILIARES -->
+<main id="tab-auxes" class="tab-content">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Saídas Auxiliares (Fones dos Músicos)</h2>
+      <button class="btn btn-primary" onclick="addNewAux()">+ Nova Aux</button>
+    </div>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:14px">
+      Defina o nome de identificação de cada saída auxiliar para o músico saber em qual fone se conectar.
+    </p>
+    <div id="auxes-list">
+      <!-- Lista de auxiliares -->
+    </div>
+  </div>
+</main>
+
+<!-- BARRA FIXA DE SALVAR -->
+<footer class="save-bar">
+  <div id="save-status" class="save-status"></div>
+  <button class="btn btn-primary" style="padding:10px 24px;font-size:16px" onclick="saveAllConfig()">
+    💾 Salvar Alterações
+  </button>
+</footer>
+
 <script src="js/socket.js"></script>
 <script>
+var currentConfig = {
+  levels: [],
+  groups: [],
+  auxes: [],
+  fixed: { click: { name: 'Clique', channels: [] }, talkback: { name: 'Talkback', channels: [] } },
+  channelNames: {}
+};
+var maxVisibleChannels = 24;
 var reqs = {};
-function render() {
-  var el = document.getElementById('requests'); el.innerHTML = '';
-  Object.keys(reqs).forEach(function (id) {
-    var r = reqs[id]; if (r.status === 'resolvido') return;
-    var b = document.createElement('button');
-    b.style.borderColor = r.status === 'aberto' ? 'var(--danger)' : 'var(--border)';
-    b.textContent = r.person + ' · ' + r.instrument + ' · Aux ' + r.aux + ' — ' + r.label + (r.status === 'visto' ? ' (visto)' : '');
-    b.onclick = function () { Socket.send({ type: 'helpSeen', id: r.id }); };
-    el.appendChild(b);
+
+function switchTab(name) {
+  var tabs = ['monitor', 'channels', 'groups', 'auxes'];
+  tabs.forEach(function (t) {
+    document.getElementById('tab-' + t).className = 'tab-content' + (t === name ? ' active' : '');
+    document.getElementById('tab-btn-' + t).className = 'tab-btn' + (t === name ? ' active' : '');
   });
 }
-Socket.on('help', function (m) { reqs[m.request.id] = m.request; render(); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); });
-Socket.on('helpUpdate', function (m) { if (reqs[m.id]) { reqs[m.id].status = m.status; render(); } });
-Socket.on('log', function (m) {
-  var l = m.line, d = document.createElement('div');
-  d.textContent = l.at.slice(11, 16) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
-  var log = document.getElementById('log'); log.insertBefore(d, log.firstChild);
+
+function loadConfig() {
+  fetch('/api/config')
+    .then(function (r) { return r.json(); })
+    .then(function (cfg) {
+      currentConfig = cfg;
+      if (!currentConfig.channelNames) currentConfig.channelNames = {};
+      if (!currentConfig.fixed) currentConfig.fixed = { click: { name: 'Clique', channels: [15] }, talkback: { name: 'Talkback', channels: [16] } };
+      renderChannelsTable();
+      renderGroupsList();
+      renderAuxesList();
+      renderFixedInputs();
+    })
+    .catch(function (err) {
+      console.error('Erro ao carregar configuracao:', err);
+    });
+}
+
+function getChannelAssignment(ch) {
+  // Retorna { type: 'group'|'fixed'|'none', id: string, name: string, color: string }
+  if (currentConfig.fixed && currentConfig.fixed.click && currentConfig.fixed.click.channels && currentConfig.fixed.click.channels.indexOf(ch) !== -1) {
+    return { type: 'fixed', id: 'click', name: 'Clique', color: '#94A3B8' };
+  }
+  if (currentConfig.fixed && currentConfig.fixed.talkback && currentConfig.fixed.talkback.channels && currentConfig.fixed.talkback.channels.indexOf(ch) !== -1) {
+    return { type: 'fixed', id: 'talkback', name: 'Talkback', color: '#94A3B8' };
+  }
+  for (var i = 0; i < currentConfig.groups.length; i++) {
+    var g = currentConfig.groups[i];
+    if (g.channels && g.channels.indexOf(ch) !== -1) {
+      return { type: 'group', id: g.id, name: g.name, color: g.color || '#3B82F6' };
+    }
+  }
+  return { type: 'none', id: '', name: 'Sem grupo', color: '#64748B' };
+}
+
+function renderChannelsTable() {
+  var tbody = document.getElementById('channel-rows');
+  tbody.innerHTML = '';
+
+  // Determinar quais canais mostrar
+  var allChannels = [];
+  for (var i = 1; i <= maxVisibleChannels; i++) allChannels.push(i);
+
+  // Incluir também qualquer canal que já esteja mapeado além do maxVisibleChannels
+  if (currentConfig.groups) {
+    currentConfig.groups.forEach(function (g) {
+      (g.channels || []).forEach(function (ch) {
+        if (allChannels.indexOf(ch) === -1) allChannels.push(ch);
+      });
+    });
+  }
+  if (currentConfig.fixed) {
+    ['click', 'talkback'].forEach(function (k) {
+      if (currentConfig.fixed[k] && currentConfig.fixed[k].channels) {
+        currentConfig.fixed[k].channels.forEach(function (ch) {
+          if (allChannels.indexOf(ch) === -1) allChannels.push(ch);
+        });
+      }
+    });
+  }
+  Object.keys(currentConfig.channelNames || {}).forEach(function (k) {
+    var ch = Number(k);
+    if (!isNaN(ch) && ch > 0 && allChannels.indexOf(ch) === -1) allChannels.push(ch);
+  });
+
+  allChannels.sort(function (a, b) { return a - b; });
+
+  allChannels.forEach(function (ch) {
+    var tr = document.createElement('tr');
+    tr.className = 'channel-row';
+
+    // Coluna Canal
+    var tdCh = document.createElement('td');
+    var chLabel = ch < 10 ? 'CH 0' + ch : 'CH ' + ch;
+    tdCh.innerHTML = '<span class="ch-pill">' + chLabel + '</span>';
+    tr.appendChild(tdCh);
+
+    // Coluna Nome do Instrumento
+    var tdName = document.createElement('td');
+    var inputName = document.createElement('input');
+    inputName.type = 'text';
+    inputName.placeholder = 'Ex: Bumbo, Voz Líder, Violão...';
+    inputName.style.width = '100%';
+    inputName.value = currentConfig.channelNames[ch] || '';
+    inputName.onchange = function () {
+      var val = inputName.value.trim();
+      if (val) currentConfig.channelNames[ch] = val;
+      else delete currentConfig.channelNames[ch];
+    };
+    tdName.appendChild(inputName);
+    tr.appendChild(tdName);
+
+    // Coluna Grupo / Destino
+    var tdGroup = document.createElement('td');
+    var selectGroup = document.createElement('select');
+    selectGroup.style.width = '100%';
+
+    var optNone = document.createElement('option');
+    optNone.value = 'none';
+    optNone.textContent = '— Sem Grupo (Desativado) —';
+    selectGroup.appendChild(optNone);
+
+    (currentConfig.groups || []).forEach(function (g) {
+      var opt = document.createElement('option');
+      opt.value = 'group:' + g.id;
+      opt.textContent = 'Grupo: ' + g.name;
+      selectGroup.appendChild(opt);
+    });
+
+    var optClick = document.createElement('option');
+    optClick.value = 'fixed:click';
+    optClick.textContent = 'Fixo: Clique (Metrônomo)';
+    selectGroup.appendChild(optClick);
+
+    var optTalk = document.createElement('option');
+    optTalk.value = 'fixed:talkback';
+    optTalk.textContent = 'Fixo: Talkback';
+    selectGroup.appendChild(optTalk);
+
+    // Set value
+    var currentAssigned = getChannelAssignment(ch);
+    if (currentAssigned.type === 'group') {
+      selectGroup.value = 'group:' + currentAssigned.id;
+    } else if (currentAssigned.type === 'fixed') {
+      selectGroup.value = 'fixed:' + currentAssigned.id;
+    } else {
+      selectGroup.value = 'none';
+    }
+
+    selectGroup.onchange = function () {
+      setChannelTarget(ch, selectGroup.value);
+    };
+
+    tdGroup.appendChild(selectGroup);
+    tr.appendChild(tdGroup);
+
+    // Coluna Limpar
+    var tdActions = document.createElement('td');
+    var btnClear = document.createElement('button');
+    btnClear.className = 'btn';
+    btnClear.style.padding = '6px 8px';
+    btnClear.style.fontSize = '12px';
+    btnClear.textContent = '✕';
+    btnClear.title = 'Desvincular canal';
+    btnClear.onclick = function () {
+      delete currentConfig.channelNames[ch];
+      setChannelTarget(ch, 'none');
+      renderChannelsTable();
+    };
+    tdActions.appendChild(btnClear);
+    tr.appendChild(tdActions);
+
+    tbody.appendChild(tr);
+  });
+}
+
+function setChannelTarget(ch, targetValue) {
+  // Remove de qualquer grupo existente
+  (currentConfig.groups || []).forEach(function (g) {
+    if (!g.channels) g.channels = [];
+    var idx = g.channels.indexOf(ch);
+    if (idx !== -1) g.channels.splice(idx, 1);
+  });
+  // Remove de fixos
+  if (currentConfig.fixed) {
+    ['click', 'talkback'].forEach(function (k) {
+      if (currentConfig.fixed[k] && currentConfig.fixed[k].channels) {
+        var idx = currentConfig.fixed[k].channels.indexOf(ch);
+        if (idx !== -1) currentConfig.fixed[k].channels.splice(idx, 1);
+      }
+    });
+  }
+
+  // Adiciona ao novo destino se aplicável
+  if (targetValue.startsWith('group:')) {
+    var gid = targetValue.replace('group:', '');
+    var g = (currentConfig.groups || []).find(function (x) { return x.id === gid; });
+    if (g) {
+      if (!g.channels) g.channels = [];
+      if (g.channels.indexOf(ch) === -1) {
+        g.channels.push(ch);
+        g.channels.sort(function (a, b) { return a - b; });
+      }
+    }
+  } else if (targetValue === 'fixed:click') {
+    if (!currentConfig.fixed.click) currentConfig.fixed.click = { name: 'Clique', channels: [] };
+    if (currentConfig.fixed.click.channels.indexOf(ch) === -1) {
+      currentConfig.fixed.click.channels.push(ch);
+    }
+  } else if (targetValue === 'fixed:talkback') {
+    if (!currentConfig.fixed.talkback) currentConfig.fixed.talkback = { name: 'Talkback', channels: [] };
+    if (currentConfig.fixed.talkback.channels.indexOf(ch) === -1) {
+      currentConfig.fixed.talkback.channels.push(ch);
+    }
+  }
+
+  renderFixedInputs();
+  renderGroupsList();
+}
+
+function renderGroupsList() {
+  var el = document.getElementById('groups-list');
+  el.innerHTML = '';
+  (currentConfig.groups || []).forEach(function (g, idx) {
+    var div = document.createElement('div');
+    div.className = 'group-item';
+
+    var colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = g.color || '#3B82F6';
+    colorInput.title = 'Cor do grupo';
+    colorInput.onchange = function () { g.color = colorInput.value; };
+    div.appendChild(colorInput);
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = g.name;
+    nameInput.style.flex = '1';
+    nameInput.placeholder = 'Nome do Grupo';
+    nameInput.onchange = function () {
+      g.name = nameInput.value.trim();
+      renderChannelsTable();
+    };
+    div.appendChild(nameInput);
+
+    var chBadge = document.createElement('span');
+    chBadge.style.fontSize = '13px';
+    chBadge.style.color = 'var(--text-2)';
+    chBadge.style.minWidth = '140px';
+    var chList = (g.channels || []).join(', ');
+    chBadge.textContent = g.channels && g.channels.length ? 'Canais: ' + chList : 'Nenhum canal';
+    div.appendChild(chBadge);
+
+    var btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-danger';
+    btnDel.textContent = 'Excluir';
+    btnDel.onclick = function () {
+      if (confirm('Deseja excluir o grupo "' + g.name + '"? Os canais ficarão sem grupo.')) {
+        currentConfig.groups.splice(idx, 1);
+        renderGroupsList();
+        renderChannelsTable();
+      }
+    };
+    div.appendChild(btnDel);
+
+    el.appendChild(div);
+  });
+}
+
+function addNewGroup() {
+  var name = prompt('Nome do novo grupo (ex: Metais, Violões, Percussão):');
+  if (!name) return;
+  var id = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '_');
+  currentConfig.groups.push({
+    id: id,
+    name: name,
+    color: '#3B82F6',
+    channels: []
+  });
+  renderGroupsList();
+  renderChannelsTable();
+}
+
+function renderFixedInputs() {
+  var clickIn = document.getElementById('fixed-click-channels');
+  var talkIn = document.getElementById('fixed-talkback-channels');
+  if (clickIn && currentConfig.fixed && currentConfig.fixed.click) {
+    clickIn.value = (currentConfig.fixed.click.channels || []).join(', ');
+  }
+  if (talkIn && currentConfig.fixed && currentConfig.fixed.talkback) {
+    talkIn.value = (currentConfig.fixed.talkback.channels || []).join(', ');
+  }
+}
+
+function updateFixedFromInputs() {
+  var parseChannels = function (str) {
+    return str.split(',')
+      .map(function (s) { return parseInt(s.trim(), 10); })
+      .filter(function (n) { return !isNaN(n) && n > 0; });
+  };
+  if (!currentConfig.fixed) currentConfig.fixed = {};
+  currentConfig.fixed.click = { name: 'Clique', channels: parseChannels(document.getElementById('fixed-click-channels').value) };
+  currentConfig.fixed.talkback = { name: 'Talkback', channels: parseChannels(document.getElementById('fixed-talkback-channels').value) };
+  renderChannelsTable();
+}
+
+function renderAuxesList() {
+  var el = document.getElementById('auxes-list');
+  el.innerHTML = '';
+  (currentConfig.auxes || []).forEach(function (a, idx) {
+    var div = document.createElement('div');
+    div.className = 'aux-item';
+
+    var badge = document.createElement('span');
+    badge.className = 'ch-pill';
+    badge.textContent = 'Aux ' + a.id;
+    div.appendChild(badge);
+
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.value = a.name;
+    nameInput.style.flex = '1';
+    nameInput.placeholder = 'Nome da saída (Ex: Fone Bateria)';
+    nameInput.onchange = function () {
+      a.name = nameInput.value.trim();
+    };
+    div.appendChild(nameInput);
+
+    var btnDel = document.createElement('button');
+    btnDel.className = 'btn btn-danger';
+    btnDel.textContent = 'Excluir';
+    btnDel.onclick = function () {
+      if (confirm('Deseja excluir a ' + a.name + '?')) {
+        currentConfig.auxes.splice(idx, 1);
+        renderAuxesList();
+      }
+    };
+    div.appendChild(btnDel);
+
+    el.appendChild(div);
+  });
+}
+
+function addNewAux() {
+  var nextId = 1;
+  (currentConfig.auxes || []).forEach(function (a) {
+    if (a.id >= nextId) nextId = a.id + 1;
+  });
+  var name = prompt('Nome da Auxiliar ' + nextId + ' (ex: Fone Guitarra):', 'Aux ' + nextId);
+  if (!name) return;
+  if (!currentConfig.auxes) currentConfig.auxes = [];
+  currentConfig.auxes.push({ id: nextId, name: name });
+  renderAuxesList();
+}
+
+function changeChannelCount(cnt) {
+  maxVisibleChannels = parseInt(cnt, 10);
+  renderChannelsTable();
+}
+
+function addCustomChannel() {
+  var chStr = prompt('Qual número de canal você quer adicionar/mapear?');
+  var ch = parseInt(chStr, 10);
+  if (isNaN(ch) || ch <= 0) return;
+  if (ch > maxVisibleChannels) {
+    maxVisibleChannels = ch;
+    document.getElementById('channel-count-select').value = ch <= 16 ? '16' : (ch <= 24 ? '24' : (ch <= 32 ? '32' : '48'));
+  }
+  renderChannelsTable();
+}
+
+function saveAllConfig() {
+  var statusEl = document.getElementById('save-status');
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = 'Salvando configurações...';
+
+  fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(currentConfig)
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (data) {
+    if (data.ok) {
+      statusEl.style.color = 'var(--ok)';
+      var now = new Date();
+      var timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      statusEl.textContent = '✅ Configurações salvas e aplicadas às ' + timeStr;
+      setTimeout(function () {
+        if (statusEl.textContent.indexOf('✅') !== -1) statusEl.textContent = '';
+      }, 5000);
+    } else {
+      statusEl.style.color = 'var(--danger)';
+      statusEl.textContent = '❌ Erro ao salvar: ' + (data.error || 'Erro desconhecido');
+    }
+  })
+  .catch(function (err) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = '❌ Erro de conexão ao salvar: ' + err.message;
+  });
+}
+
+// LÓGICA DE SOCKET & MONITORAMENTO
+function renderHelpRequests() {
+  var el = document.getElementById('requests');
+  el.innerHTML = '';
+  var openCount = 0;
+  var keys = Object.keys(reqs);
+
+  keys.forEach(function (id) {
+    var r = reqs[id];
+    if (r.status === 'resolvido') return;
+    openCount++;
+    var b = document.createElement('button');
+    b.className = 'btn';
+    b.style.display = 'block';
+    b.style.width = '100%';
+    b.style.textAlign = 'left';
+    b.style.marginBottom = '8px';
+    b.style.borderColor = r.status === 'aberto' ? 'var(--danger)' : 'var(--border)';
+    b.style.background = r.status === 'aberto' ? 'rgba(239, 68, 68, 0.08)' : 'var(--surface)';
+
+    b.innerHTML = '<strong>' + r.person + ' · ' + r.instrument + ' (Aux ' + r.aux + ')</strong><br>' +
+                  '<span style="font-size:14px;color:var(--text-2)">' + r.label + '</span> ' +
+                  (r.status === 'visto' ? '<span style="color:var(--accent);font-size:12px">● Visto pelo técnico</span>' : '<span style="color:var(--danger);font-size:12px">● Novo pedido! Clique para marcar visto</span>');
+
+    b.onclick = function () {
+      Socket.send({ type: 'helpSeen', id: r.id });
+    };
+    el.appendChild(b);
+  });
+
+  var badge = document.getElementById('badge-requests');
+  if (openCount > 0) {
+    badge.textContent = openCount;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+    el.innerHTML = '<p style="color:var(--text-2)">Nenhum pedido aberto no momento.</p>';
+  }
+}
+
+Socket.on('help', function (m) {
+  reqs[m.request.id] = m.request;
+  renderHelpRequests();
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 });
-Socket.connect(); Socket.send({ type: 'hello', role: 'tech' });
+
+Socket.on('helpUpdate', function (m) {
+  if (reqs[m.id]) {
+    reqs[m.id].status = m.status;
+    renderHelpRequests();
+  }
+});
+
+Socket.on('log', function (m) {
+  var l = m.line;
+  var d = document.createElement('div');
+  d.textContent = l.at.slice(11, 16) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
+  var log = document.getElementById('log');
+  log.insertBefore(d, log.firstChild);
+});
+
+Socket.on('mixer', function (m) {
+  var pill = document.getElementById('status-pill');
+  if (m.connected) {
+    pill.className = 'dot';
+    pill.textContent = '● Mesa conectada';
+  } else {
+    pill.className = 'dot off';
+    pill.textContent = '● Mesa desconectada';
+  }
+});
+
+Socket.connect();
+Socket.send({ type: 'hello', role: 'tech' });
+loadConfig();
 </script>
-</body></html>
+</body>
+</html>

@@ -26,5 +26,23 @@
     "click": { "name": "Clique", "channels": [15] },
     "talkback": { "name": "Talkback", "channels": [16] }
   },
+  "channelNames": {
+    "1": "Bumbo",
+    "2": "Caixa",
+    "3": "Chimbal",
+    "4": "Over / Tons",
+    "5": "Baixo",
+    "6": "Guitarra 1",
+    "7": "Guitarra 2",
+    "8": "Teclado L",
+    "9": "Teclado R",
+    "10": "Voz Líder",
+    "11": "Backing 1",
+    "12": "Backing 2",
+    "13": "Playback L",
+    "14": "Playback R",
+    "15": "Clique",
+    "16": "Talkback"
+  },
   "proske": { "url": "https://app.proske.com.br", "enabled": false }
 }

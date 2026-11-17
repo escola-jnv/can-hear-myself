@@ -5,4 +5,7 @@ config/app.config.json
 build/installer/
 desktop/src-tauri/binaries/*
 desktop/src-tauri/target/
+build/.cache/
+server/embedded-assets.js
+*.exe
 *.log
