@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Can Hear Myself",
+  "version": "0.1.0",
+  "identifier": "br.com.proske.canhearmyself",
+  "build": { "frontendDist": "../panel" },
+  "app": {
+    "windows": [{ "title": "Can Hear Myself", "width": 900, "height": 640 }],
+    "trayIcon": { "iconPath": "icons/icon.png", "tooltip": "Can Hear Myself" }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "externalBin": ["binaries/chm-server"]
+  }
+}

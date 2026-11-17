@@ -1,0 +1,30 @@
+{
+  "port": 3000,
+  "mixer": { "model": "mock", "ip": "10.10.1.1" },
+  "levels": [
+    { "step": 0, "label": "Desligado", "db": null },
+    { "step": 1, "label": "Baixo", "db": -20 },
+    { "step": 2, "label": "Médio", "db": -10 },
+    { "step": 3, "label": "Alto", "db": -5 },
+    { "step": 4, "label": "Cheio", "db": 0 }
+  ],
+  "maxDb": 0,
+  "groupLimitBehavior": "stop",
+  "auxes": [
+    { "id": 1, "name": "Aux 1" }, { "id": 2, "name": "Aux 2" },
+    { "id": 3, "name": "Aux 3" }, { "id": 4, "name": "Aux 4" }
+  ],
+  "groups": [
+    { "id": "bateria", "name": "Bateria", "color": "#F97316", "icon": "drum", "channels": [1, 2, 3, 4] },
+    { "id": "baixo", "name": "Baixo", "color": "#A855F7", "icon": "bass", "channels": [5] },
+    { "id": "guitarras", "name": "Guitarras", "color": "#EAB308", "icon": "guitar", "channels": [6, 7] },
+    { "id": "teclados", "name": "Teclados", "color": "#22C55E", "icon": "keys", "channels": [8, 9] },
+    { "id": "vozes", "name": "Vozes", "color": "#3B82F6", "icon": "mic", "channels": [10, 11, 12] },
+    { "id": "playback", "name": "Playback", "color": "#EC4899", "icon": "play", "channels": [13, 14] }
+  ],
+  "fixed": {
+    "click": { "name": "Clique", "channels": [15] },
+    "talkback": { "name": "Talkback", "channels": [16] }
+  },
+  "proske": { "url": "https://app.proske.com.br", "enabled": false }
+}

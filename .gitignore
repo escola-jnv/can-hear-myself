@@ -1,0 +1,8 @@
+node_modules/
+data/*
+!data/.gitkeep
+config/app.config.json
+build/installer/
+desktop/src-tauri/binaries/*
+desktop/src-tauri/target/
+*.log

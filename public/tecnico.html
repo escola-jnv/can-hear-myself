@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Técnico · Can Hear Myself</title>
+<link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/app.css"></head>
+<body>
+<section class="screen on">
+  <h1>Pedidos de ajuda</h1>
+  <div id="requests" class="list"><p style="color:var(--text-2)">Nenhum pedido.</p></div>
+  <h1 style="margin-top:24px">Atividade</h1>
+  <div id="log" style="font-size:14px;color:var(--text-2)"></div>
+</section>
+<script src="js/socket.js"></script>
+<script>
+var reqs = {};
+function render() {
+  var el = document.getElementById('requests'); el.innerHTML = '';
+  Object.keys(reqs).forEach(function (id) {
+    var r = reqs[id]; if (r.status === 'resolvido') return;
+    var b = document.createElement('button');
+    b.style.borderColor = r.status === 'aberto' ? 'var(--danger)' : 'var(--border)';
+    b.textContent = r.person + ' · ' + r.instrument + ' · Aux ' + r.aux + ' — ' + r.label + (r.status === 'visto' ? ' (visto)' : '');
+    b.onclick = function () { Socket.send({ type: 'helpSeen', id: r.id }); };
+    el.appendChild(b);
+  });
+}
+Socket.on('help', function (m) { reqs[m.request.id] = m.request; render(); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); });
+Socket.on('helpUpdate', function (m) { if (reqs[m.id]) { reqs[m.id].status = m.status; render(); } });
+Socket.on('log', function (m) {
+  var l = m.line, d = document.createElement('div');
+  d.textContent = l.at.slice(11, 16) + ' — ' + l.person + ' ' + l.action + (l.target ? ' ' + l.target : '') + (l.value !== undefined ? ' → ' + l.value : '') + (l.aux ? ' (Aux ' + l.aux + ')' : '');
+  var log = document.getElementById('log'); log.insertBefore(d, log.firstChild);
+});
+Socket.connect(); Socket.send({ type: 'hello', role: 'tech' });
+</script>
+</body></html>

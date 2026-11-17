@@ -1,0 +1,21 @@
+{
+  "name": "can-hear-myself",
+  "version": "0.1.0",
+  "description": "Retorno de fone controlado pelo celular, integrado ao Proskë",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "mock": "node server/index.js",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "soundcraft-ui-connection": "^4.0.0",
+    "osc": "^2.4.5"
+  }
+}
