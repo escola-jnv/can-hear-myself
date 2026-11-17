@@ -651,86 +651,100 @@
   <!-- 1. MESA DE SOM & ENDEREÇOS -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">🎛️ Mesa de Som & Conexão</h2>
-      <span id="mixer-connected-dot" class="dot">● Conectando...</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <h2 class="card-title" style="margin:0">🎛️ Mesa de Som & Conexão</h2>
+        <span id="mixer-connected-dot" class="dot">● Conectando...</span>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="openMixerModal()" title="Configurar e conectar mesa de som" style="display:inline-flex;align-items:center;gap:6px">
+        🔌 Conectar Mesa
+      </button>
     </div>
     <div class="server-grid">
       <div>
         <div class="label">Mesa Atual</div>
-        <div id="mixer-name-display" class="url" style="color:var(--text)">Carregando...</div>
-        <div id="mixer-ip-display" style="font-size:13px;color:var(--text-2);margin-top:2px">IP: …</div>
+        <div id="mixer-name-display" class="url" style="color:var(--text);font-size:16px">Carregando...</div>
+        <div id="mixer-ip-container" style="margin-top:6px">
+          <span id="mixer-ip-display" class="copy-pill" onclick="copyMixerIp()" title="Clique para copiar o IP da mesa">
+            IP: Carregando... <span class="copy-badge">📋</span>
+          </span>
+        </div>
       </div>
       <div>
         <div class="label">Músicos: abram no celular (mesmo Wi-Fi)</div>
-        <div id="musician-urls" class="url">…</div>
+        <div id="musician-urls">…</div>
       </div>
       <div>
         <div class="label">Painel do Técnico</div>
-        <div id="tech-urls" class="url">…</div>
+        <div id="tech-urls">…</div>
       </div>
     </div>
+  </div>
 
-    <!-- SELEÇÃO E CONFIGURAÇÃO DA MESA -->
-    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <label for="select-mixer-model" style="font-size:14px;font-weight:600">Selecionar Mesa:</label>
-          <select id="select-mixer-model" onchange="onMixerModelChanged(this.value)" style="min-width:210px">
-            <option value="ui24r">Soundcraft Ui24R</option>
-            <option value="x32">Behringer X32 / M32</option>
-            <option value="xair">Behringer X Air (XR12 / XR16 / XR18)</option>
-            <option value="mock">Mesa Virtual (Mock)</option>
-          </select>
+  <!-- MODAL DE CONEXÃO DA MESA (ABRE AO CLICAR NO BOTÃO CONECTAR MESA) -->
+  <div id="mixer-modal" class="modal-overlay" onclick="closeMixerModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🔌 Conectar Mesa de Som</span>
         </div>
-        <span id="mixer-save-indicator" style="font-size:13px;font-weight:500"></span>
+        <button class="btn-close" onclick="closeMixerModal()" title="Fechar">✕</button>
       </div>
+      <div class="modal-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <label for="select-mixer-model" style="font-size:14px;font-weight:600">Modelo da Mesa:</label>
+            <select id="select-mixer-model" onchange="onMixerModelChanged(this.value)" style="min-width:210px">
+              <option value="ui24r">Soundcraft Ui24R</option>
+              <option value="x32">Behringer X32 / M32</option>
+              <option value="xair">Behringer X Air (XR12 / XR16 / XR18)</option>
+              <option value="mock">Mesa Virtual (Mock)</option>
+            </select>
+          </div>
+          <span id="mixer-save-indicator" style="font-size:13px;font-weight:500"></span>
+        </div>
 
-      <!-- OPÇÕES DE CONEXÃO AO SELECIONAR A MESA -->
-      <div id="mixer-connection-section" style="margin-top:10px">
         <div style="font-size:13px;color:var(--text-2);margin-bottom:10px">
           Opção de conexão para <strong id="selected-mixer-name-label" style="color:var(--text)">Soundcraft Ui24R</strong>:
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:12px">
-          
-          <!-- OPÇÃO 1: MOCK -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px">
+          <!-- 1. MOCK -->
           <div id="opt-card-mock" class="mixer-opt-card" onclick="setConnectionMode('mock')">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
               <input type="radio" name="conn-mode-choice" id="radio-conn-mock" value="mock" onchange="setConnectionMode('mock')">
               <label for="radio-conn-mock" style="font-weight:600;font-size:14px;cursor:pointer">1. Mock</label>
             </div>
-            <div style="font-size:12px;color:var(--text-2);line-height:1.4">
-              Mesa virtual em memória. Ideal para testes sem conectar na mesa física.
+            <div style="font-size:12px;color:var(--text-2);line-height:1.3">
+              Mesa virtual simulada em memória. Não necessita de mesa física nem rede.
             </div>
           </div>
 
-          <!-- OPÇÃO 2: SEARCH AUTO -->
+          <!-- 2. SEARCH AUTO -->
           <div id="opt-card-auto" class="mixer-opt-card" onclick="setConnectionMode('auto')">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
               <input type="radio" name="conn-mode-choice" id="radio-conn-auto" value="auto" onchange="setConnectionMode('auto')">
               <label for="radio-conn-auto" style="font-weight:600;font-size:14px;cursor:pointer">2. Search auto</label>
             </div>
-            <div style="font-size:12px;color:var(--text-2);line-height:1.4">
+            <div style="font-size:12px;color:var(--text-2);line-height:1.3">
               Varrer os IPs para saber qual IP da mesa na rede automaticamente.
             </div>
           </div>
 
-          <!-- OPÇÃO 3: DIGITAR IP MANUALMENTE -->
+          <!-- 3. DIGITAR IP MANUALMENTE -->
           <div id="opt-card-manual" class="mixer-opt-card" onclick="setConnectionMode('manual')">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
               <input type="radio" name="conn-mode-choice" id="radio-conn-manual" value="manual" onchange="setConnectionMode('manual')">
-              <label for="radio-conn-manual" style="font-weight:600;font-size:14px;cursor:pointer">3. Digitar IP manualmente</label>
+              <label for="radio-conn-manual" style="font-weight:600;font-size:14px;cursor:pointer">3. Digitar IP</label>
             </div>
-            <div style="font-size:12px;color:var(--text-2);line-height:1.4">
+            <div style="font-size:12px;color:var(--text-2);line-height:1.3">
               Digitar diretamente o IP fixo ou Wi-Fi da mesa de som.
             </div>
           </div>
-
         </div>
 
         <!-- PAINEL 1: MOCK -->
-        <div id="panel-conn-mock" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
-          <p style="font-size:13px;color:var(--text-2);margin:0 0 10px 0">
+        <div id="panel-conn-mock" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
+          <p style="font-size:13px;color:var(--text-2);margin:0 0 12px 0">
             A mesa será executada em modo simulado (Mock). Os faders, canais e mixagens responderão normalmente sem conexão de hardware.
           </p>
           <button class="btn btn-primary btn-sm" onclick="applyMixerConnection('mock')">
@@ -739,7 +753,7 @@
         </div>
 
         <!-- PAINEL 2: SEARCH AUTO -->
-        <div id="panel-conn-auto" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div id="panel-conn-auto" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
             <button id="btn-scan-network" class="btn btn-primary btn-sm" onclick="performMixerScan()">
               🔍 Varrer IPs da Rede Local
@@ -755,7 +769,7 @@
         </div>
 
         <!-- PAINEL 3: DIGITAR IP MANUALMENTE -->
-        <div id="panel-conn-manual" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px">
+        <div id="panel-conn-manual" class="opt-panel" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <label for="input-manual-ip" style="font-size:13px;font-weight:500">IP da Mesa:</label>
             <input type="text" id="input-manual-ip" placeholder="Ex: 10.10.1.1 ou 192.168.1.50" style="width:200px" onkeydown="if(event.key==='Enter')applyMixerConnection('manual')">
@@ -764,7 +778,7 @@
             </button>
           </div>
           <p style="font-size:12px;color:var(--text-2);margin:8px 0 0 0">
-            Dica: Se estiver conectado ao ponto de acesso Wi-Fi próprio da Ui24R, use <code>10.10.1.1</code>. Se estiver no roteador, consulte o IP nos ajustes da mesa.
+            Dica: No Wi-Fi próprio da Ui24R, use <code>10.10.1.1</code>. Se estiver no roteador, consulte o IP nos ajustes da mesa.
           </p>
         </div>
 
@@ -2302,6 +2316,83 @@ var currentMixerIp = 'local';
 var currentConnMode = 'mock';
 var mixerInitialized = false;
 
+function openMixerModal() {
+  var modal = document.getElementById('mixer-modal');
+  if (modal) modal.classList.add('open');
+  var sel = document.getElementById('select-mixer-model');
+  if (sel && currentMixerModel) {
+    sel.value = currentMixerModel;
+    onMixerModelChanged(currentMixerModel);
+  }
+}
+
+function closeMixerModal(e) {
+  if (e && e.target && e.target.id !== 'mixer-modal' && !e.target.classList.contains('btn-close')) {
+    return;
+  }
+  var modal = document.getElementById('mixer-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    var modal = document.getElementById('mixer-modal');
+    if (modal && modal.classList.contains('open')) {
+      modal.classList.remove('open');
+    }
+  }
+});
+
+var toastTimer;
+function showToast(msg) {
+  var toast = document.getElementById('toast-notification');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    toast.classList.remove('show');
+  }, 2200);
+}
+
+function copyToClipboard(text, e) {
+  if (e) e.stopPropagation();
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () {
+      showToast('📋 Copiado: ' + text);
+    }).catch(function () {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('📋 Copiado: ' + text);
+  } catch (err) {
+    prompt('Copie o link manualmente:', text);
+  }
+  document.body.removeChild(ta);
+}
+
+function copyMixerIp(ip) {
+  var target = ip || currentMixerIp || '';
+  if (!target || target.toLowerCase() === 'local') {
+    showToast('🧪 Mesa Virtual Mock (sem IP de rede)');
+    return;
+  }
+  var full = target.startsWith('http') ? target : 'http://' + target;
+  copyToClipboard(full);
+}
+
 function getFriendlyMixerName(model) {
   var m = (model || '').toLowerCase();
   if (m === 'ui24r') return 'Soundcraft Ui24R';
@@ -2324,7 +2415,6 @@ function onMixerModelChanged(model) {
     if (ipInput && (!ipInput.value || ipInput.value === 'local' || ipInput.value === 'Local')) {
       ipInput.value = model === 'ui24r' ? '10.10.1.1' : '192.168.1.50';
     }
-    // Ao selecionar uma mesa física, abre as opções dando destaque para busca automática
     if (currentConnMode === 'mock') {
       setConnectionMode('auto');
     }
@@ -2390,6 +2480,9 @@ function applyMixerConnection(mode, explicitModel, explicitIp) {
     if (data.ok) {
       showMixerStatus('✅ Conectado à ' + getFriendlyMixerName(model) + ' (' + ip + ')!', 'var(--ok)');
       refreshStatus();
+      setTimeout(function () {
+        closeMixerModal();
+      }, 700);
     } else {
       showMixerStatus('❌ Erro: ' + (data.error || 'Falha ao conectar'), 'var(--danger)');
     }
@@ -2525,6 +2618,22 @@ Socket.on('songs', function (m) {
   }
 });
 
+function renderMixerIpPill(ip) {
+  var el = document.getElementById('mixer-ip-display');
+  if (!el) return;
+  var isLocal = !ip || ip.toLowerCase() === 'local';
+  if (isLocal) {
+    el.innerHTML = '🧪 Modo Mock (Local) <span class="copy-badge">Sem IP</span>';
+    el.title = 'Mesa Virtual Mock (executando localmente)';
+    el.onclick = function () { copyMixerIp('local'); };
+  } else {
+    var fullLink = ip.startsWith('http') ? ip : 'http://' + ip;
+    el.innerHTML = '🌐 IP: <strong>' + ip + '</strong> <span class="copy-badge">📋 Copiar Link</span>';
+    el.title = 'Clique para copiar o link da mesa: ' + fullLink;
+    el.onclick = function () { copyMixerIp(fullLink); };
+  }
+}
+
 Socket.on('mixer', function (m) {
   var pill = document.getElementById('status-pill');
   if (pill) {
@@ -2550,7 +2659,7 @@ Socket.on('mixer', function (m) {
   }
   if (m.ip) {
     currentMixerIp = m.ip;
-    document.getElementById('mixer-ip-display').textContent = 'IP: ' + m.ip;
+    renderMixerIpPill(m.ip);
     var manualIn = document.getElementById('input-manual-ip');
     if (manualIn && document.activeElement !== manualIn && (!manualIn.value || manualIn.value === 'local')) {
       if (currentMixerModel !== 'mock') manualIn.value = m.ip;
@@ -2563,8 +2672,22 @@ function refreshStatus() {
   fetch('/api/status')
     .then(function (r) { return r.json(); })
     .then(function (s) {
-      document.getElementById('musician-urls').innerHTML = s.musicianUrls.join('<br>');
-      document.getElementById('tech-urls').innerHTML = s.techUrls.join('<br>');
+      var musEl = document.getElementById('musician-urls');
+      if (musEl) {
+        musEl.innerHTML = (s.musicianUrls || []).map(function (u) {
+          return '<span class="copy-pill" onclick="copyToClipboard(\'' + u + '\')" title="Clique para copiar o link">' +
+            '📱 ' + u + ' <span class="copy-badge">📋 Copiar</span></span> ';
+        }).join('');
+      }
+
+      var techEl = document.getElementById('tech-urls');
+      if (techEl) {
+        techEl.innerHTML = (s.techUrls || []).map(function (u) {
+          return '<span class="copy-pill" onclick="copyToClipboard(\'' + u + '\')" title="Clique para copiar o link">' +
+            '💻 ' + u + ' <span class="copy-badge">📋 Copiar</span></span> ';
+        }).join('');
+      }
+
       renderSessionsList(s.sessions || []);
 
       var rawModel = (s.mixer.model || 'mock').toLowerCase();
@@ -2572,7 +2695,7 @@ function refreshStatus() {
       currentMixerIp = s.mixer.ip || 'local';
 
       document.getElementById('mixer-name-display').textContent = getFriendlyMixerName(rawModel);
-      document.getElementById('mixer-ip-display').textContent = 'IP: ' + (s.mixer.ip || 'Local');
+      renderMixerIpPill(s.mixer.ip);
 
       var sel = document.getElementById('select-mixer-model');
       if (sel && document.activeElement !== sel) {
@@ -2634,5 +2757,6 @@ Socket.send({ type: 'hello', role: 'tech' });
 loadConfig();
 initImportDropzone();
 </script>
+<div id="toast-notification" class="toast-msg"></div>
 </body>
 </html>
