@@ -423,6 +423,125 @@
     border-color: var(--accent);
     background: rgba(245, 165, 36, 0.08);
   }
+  /* MODAL DE CONEXÃO DA MESA */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(12px);
+    transition: transform 0.2s ease;
+  }
+  .modal-overlay.open .modal-box {
+    transform: translateY(0);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .modal-body {
+    padding: 18px;
+  }
+  .btn-close {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+  .btn-close:hover {
+    color: var(--text);
+    background: var(--bg);
+  }
+  .copy-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    margin-bottom: 4px;
+  }
+  .copy-pill:hover {
+    border-color: var(--accent);
+    background: rgba(245, 165, 36, 0.1);
+  }
+  .copy-pill:active {
+    transform: scale(0.97);
+  }
+  .copy-badge {
+    font-size: 11px;
+    color: var(--text-2);
+    font-weight: normal;
+    margin-left: 2px;
+  }
+  .toast-msg {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    border: 1px solid var(--accent);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    z-index: 2000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .toast-msg.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-6px);
+  }
   .session-card {
     display: flex;
     justify-content: space-between;
@@ -490,6 +609,7 @@
 <header class="tech-header">
   <div class="tech-title">
     <span>🎚️ Can Hear Myself</span>
+    <span id="app-version" style="font-size:12px;color:var(--text-2);font-weight:normal"></span>
     <span style="font-size:14px;color:var(--text-2);font-weight:normal">· Técnico</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
@@ -2042,6 +2162,8 @@ function renderSongsList() {
     btnPlay.className = 'btn btn-sm' + (isCurrent ? ' btn-primary' : '');
     btnPlay.innerHTML = isCurrent ? '✓ No Ar' : '▶ Tocar';
     btnPlay.onclick = function () {
+      if (isCurrent) return;
+      if (!confirm('Trocar a música para "' + song.name + '"? Todos os músicos serão avisados.')) return;
       Socket.send({ type: 'setSong', songId: song.id });
     };
     actions.appendChild(btnPlay);
@@ -2137,6 +2259,17 @@ function renderHelpRequests() {
       Socket.send({ type: 'helpSeen', id: r.id });
     };
     el.appendChild(b);
+
+    // Depois de visto, o técnico encerra o pedido
+    if (r.status === 'visto') {
+      var done = document.createElement('button');
+      done.className = 'btn btn-sm';
+      done.style.marginTop = '-4px';
+      done.style.marginBottom = '10px';
+      done.textContent = '✓ Resolvido';
+      done.onclick = function () { Socket.send({ type: 'helpResolve', id: r.id }); };
+      el.appendChild(done);
+    }
   });
 
   var badge = document.getElementById('badge-requests');
@@ -2347,6 +2480,12 @@ Socket.on('help', function (m) {
   if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 });
 
+Socket.on('helpList', function (m) {
+  reqs = {};
+  (m.requests || []).forEach(function (r) { reqs[r.id] = r; });
+  renderHelpRequests();
+});
+
 Socket.on('helpUpdate', function (m) {
   if (reqs[m.id]) {
     reqs[m.id].status = m.status;
@@ -2476,6 +2615,7 @@ function refreshStatus() {
       }
 
       document.getElementById('readonly-notice').style.display = s.canEditConfig ? 'none' : 'block';
+      if (s.version) document.getElementById('app-version').textContent = 'v' + s.version + (s.releaseName ? ' · ' + s.releaseName : '');
       if (!historyLoaded) {
         historyLoaded = true;
         (s.help || []).forEach(function (r) { reqs[r.id] = r; });

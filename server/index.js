@@ -14,6 +14,7 @@ const { Presets } = require('./core/presets');
 const { Help } = require('./core/help');
 const { Setlist } = require('./core/setlist');
 const ActivityLog = require('./core/activity-log');
+const { APP_VERSION, RELEASE_NAME } = require('./version');
 const { openAppWindow, showNativeDialog, setupFileLogging } = require('./app-window');
 
 setupFileLogging();
@@ -181,6 +182,8 @@ function buildStatus(req) {
   const urls = localUrls();
   const list = sessions.list();
   return {
+    version: APP_VERSION,
+    releaseName: RELEASE_NAME,
     mixer: { model: config.mixer.model, ip: config.mixer.ip, connected: driver.connected },
     port: config.port,
     urls,
@@ -253,6 +256,11 @@ const server = http.createServer((req, res) => {
       channelNames: config.channelNames || {},
       mixer: config.mixer
     }));
+  }
+
+  if (req.url.startsWith('/api/mixer/') && !isLocalRequest(req)) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ ok: false, error: 'A mesa só pode ser trocada no computador do servidor.' }));
   }
 
   if (req.url === '/api/mixer/scan') {
@@ -427,9 +435,20 @@ hub = new Hub(server, async (ws, msg) => {
       return hub.broadcast({ type: 'songs', songs });
     }
     case 'setMixer': {
+      if (!ws.isLocal) {
+        return hub.send(ws, { type: 'error', message: 'A mesa só pode ser trocada no computador do servidor.' });
+      }
       const model = (msg.model || 'mock').toLowerCase();
       const ip = msg.ip !== undefined ? msg.ip : (model === 'mock' ? 'local' : '10.10.1.1');
       await setMixer(model, ip);
+      return;
+    }
+    case 'helpResolve': {
+      const req = help.resolve(Number(msg.id));
+      if (req) {
+        log.add({ person: 'técnico', action: 'resolveu pedido de ajuda', target: req.label, aux: req.aux });
+        hub.broadcast({ type: 'helpUpdate', id: req.id, status: req.status }, (c) => (c.who && c.who.aux === req.aux) || c.role !== 'musician');
+      }
       return;
     }
     case 'close':
@@ -454,7 +473,7 @@ const isRunningDirectly = require.main === module
 if (isRunningDirectly) {
   server.listen(config.port, async () => {
     console.log('==================================================');
-    console.log('  Can Hear Myself - Servidor Local');
+    console.log(`  Can Hear Myself v${APP_VERSION} — ${RELEASE_NAME}`);
     console.log('==================================================');
     console.log(`Mesa configurada: ${config.mixer.model} (${config.mixer.ip || 'local'})`);
     console.log(`Porta: ${config.port}`);

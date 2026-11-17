@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "name": "Palco Afinado",
+  "date": "2026-11-17",
+  "highlights": [
+    "O programa abre o Painel do Técnico sozinho, com endereços, pessoas conectadas e mapeamento de canais",
+    "Músicos podem salvar a própria mix"
+  ],
+  "items": [
+    { "area": "Painel do Técnico", "audience": "[TÉCNICO]", "category": "Nova Feature", "text": "Abre sozinho ao iniciar e mostra os endereços para músicos e técnico, quantas pessoas estão conectadas e em qual aparelho." },
+    { "area": "Mapeamento de Canais", "audience": "[TÉCNICO]", "category": "Nova Feature", "text": "Nomear cada canal da mesa, montar grupos e saídas pelo painel." },
+    { "area": "Repertório", "audience": "[MÚSICO & TÉCNICO]", "category": "Nova Feature", "text": "Cadastro e ordem das músicas no painel; ao trocar a música, todos veem nome, tom e BPM." },
+    { "area": "Mesa de Som", "audience": "[TÉCNICO]", "category": "Nova Feature", "text": "Busca automática da mesa na rede." },
+    { "area": "App do Músico", "audience": "[MÚSICO]", "category": "Nova Feature", "text": "Botão Salvar: a sua mix volta sozinha na próxima vez." },
+    { "area": "App do Músico", "audience": "[MÚSICO]", "category": "Feature Melhora", "text": "Ícones de instrumentos e ajuste de cada peça da bateria; app bem mais leve no celular." },
+    { "area": "Pedido de Ajuda", "audience": "[MÚSICO & TÉCNICO]", "category": "Feature Melhora", "text": "O técnico marca o pedido como resolvido e o botão do músico volta ao normal." },
+    { "area": "Servidor", "audience": "[TÉCNICO]", "category": "Correção de Bug", "text": "O programa não fecha mais sozinho quando já existe outro aberto; erros ficam registrados." },
+    { "area": "Segurança", "audience": "[TÉCNICO]", "category": "Correção de Bug", "text": "Só o computador do servidor pode trocar a mesa ou o mapeamento de canais." },
+    { "area": "App do Músico", "audience": "[MÚSICO]", "category": "Correção de Bug", "text": "Sem mix salva, tudo começa no nível 3, inclusive clique e talkback." }
+  ]
+}

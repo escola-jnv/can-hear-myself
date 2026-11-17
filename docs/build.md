@@ -1,43 +1,52 @@
 # Gerar o executável
 
-## 1. Gerar o servidor em `.exe` (Node SEA com Node embutido)
+## 1. Servidor em `.exe` (Node SEA, com Node embutido)
 
-Execute na raiz do projeto:
+Na raiz do projeto:
 
 ```bash
 npm run build:exe
 ```
-ou:
-```bash
-node build/build-server.js
-```
 
-O script realiza automaticamente:
-1. Mapeia e embute todos os arquivos estáticos de `public/` em memória (`server/embedded-assets.js`), garantindo que o `.exe` funcione de forma 100% autônoma até se for copiado para outra máquina ou pasta sem arquivos auxiliares.
-2. Faz o bundle do servidor e de suas dependências (`ws`, `soundcraft-ui-connection`, etc.) usando `esbuild`.
-3. Prepara a imagem SEA (Single Executable Application) do Node.js.
-4. Injeta o runtime do Node SEA no binário usando `postject`.
-5. Gera os executáveis prontos:
-   - `can-hear-myself.exe` (na raiz do projeto, para execução direta no Windows)
-   - `desktop/src-tauri/binaries/chm-server-x86_64-pc-windows-msvc.exe` (sidecar para Tauri)
-   - `desktop/src-tauri/binaries/chm-server.exe` (sidecar padrão)
+O script (`build/build-server.js`):
+1. Embute todos os arquivos de `public/` dentro do executável (`server/embedded-assets.js`, gerado — não vai para o Git).
+2. Faz o bundle do servidor e dependências com `esbuild`.
+3. Gera o blob SEA e injeta no `node.exe` com `postject`.
+4. Copia o resultado para:
+   - `can-hear-myself.exe` (raiz)
+   - `desktop/src-tauri/binaries/chm-server-x86_64-pc-windows-msvc.exe` e `chm-server.exe` (sidecar do Tauri)
 
-### Executando o `.exe`
+### Gerar o `.exe` de Windows a partir de outro sistema
 
-Basta dar dois cliques no `can-hear-myself.exe` ou rodar via terminal:
+Use o `node.exe` da **mesma versão** do Node que roda o build:
 
 ```bash
-.\can-hear-myself.exe
+npm pack node-win-x64@$(node -v | tr -d v) && tar xzf node-win-x64-*.tgz
+CHM_NODE_BINARY=package/bin/node.exe npm run build:exe
 ```
 
-Parâmetros opcionais via CLI:
-```bash
-.\can-hear-myself.exe --port 3000 --mixer ui24r --ip 10.10.1.1
-```
+### Ícones
 
-## 2. Gerar o instalador Windows completo com Tauri (opcional)
+O app usa só os ícones listados em `build/gen-icons.js`. Para incluir um novo, adicione o nome lá e rode:
 
 ```bash
-cd desktop && npx tauri build
+npm run icons
 ```
-Gera o instalador final `.msi`/`.exe` para Windows.
+
+## 2. Rodar o `.exe`
+
+Dois cliques em `can-hear-myself.exe`. O Painel do Técnico abre sozinho.
+
+Opções:
+
+```bash
+can-hear-myself.exe --port 3001 --mixer ui24r --ip 10.10.1.1 --no-open
+```
+
+- Se a porta já estiver em uso, o programa avisa e abre o painel do servidor que já está rodando.
+- Erros ficam em `data\logs\erros.log`.
+- O Windows pode avisar "editor desconhecido" (o `.exe` não é assinado): **Mais informações → Executar assim mesmo**.
+
+## 3. Instalador com Tauri (planejado)
+
+Ainda não inicializado — ver `desktop/README.md`.

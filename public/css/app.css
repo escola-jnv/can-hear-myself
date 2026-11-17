@@ -493,3 +493,22 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
   text-align: center;
 }
 .warn.on { display: block; }
+
+/* Botão Salvar minha mix */
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+.save-btn svg { width: 16px; height: 16px; }
+.save-btn.saved { color: var(--ok); border-color: var(--ok); }

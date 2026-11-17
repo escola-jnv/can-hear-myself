@@ -7,12 +7,57 @@ class Mix {
     this.config = config;
     this.driver = driver;
     this.state = {}; // aux -> { groups: {id: step}, fixed: {}, offsets: {channel: db} }
+    this.initialized = new Set();
+    this.auxPersons = {};
+  }
+
+  defaultAuxState() {
+    const groups = {};
+    const channels = {};
+    if (this.config.groups) {
+      for (const g of this.config.groups) {
+        groups[g.id] = 3;
+        if (g.channels) {
+          for (const ch of g.channels) {
+            channels[ch] = 3;
+          }
+        }
+      }
+    }
+    const fixed = { master: 3, click: 3, talkback: 3 };
+    if (this.config.fixed) {
+      for (const k of Object.keys(this.config.fixed)) {
+        fixed[k] = 3;
+      }
+    }
+    return { groups, fixed, channels, offsets: {} };
   }
 
   auxState(aux) {
-    if (!this.state[aux]) this.state[aux] = { groups: {}, fixed: { master: 3, click: 2, talkback: 2 }, channels: {}, offsets: {} };
+    if (!this.state[aux]) {
+      this.state[aux] = this.defaultAuxState();
+    }
     if (!this.state[aux].channels) this.state[aux].channels = {};
+    if (!this.state[aux].groups) this.state[aux].groups = {};
+    if (!this.state[aux].fixed) this.state[aux].fixed = {};
     return this.state[aux];
+  }
+
+  isInitialized(aux) {
+    return this.initialized.has(aux);
+  }
+
+  async initAux(aux) {
+    await this.apply(aux, this.defaultAuxState());
+    this.initialized.add(aux);
+  }
+
+  getAuxPerson(aux) {
+    return this.auxPersons[aux] || null;
+  }
+
+  setAuxPerson(aux, person) {
+    this.auxPersons[aux] = person;
   }
 
   stepToDb(step) {
@@ -30,19 +75,84 @@ class Mix {
   async setGroupLevel(aux, groupId, step) {
     const group = this.config.groups.find((g) => g.id === groupId);
     if (!group) throw new Error(`Grupo desconhecido: ${groupId}`);
-    const groupDb = this.stepToDb(step);
     const st = this.auxState(aux);
+    if (!st.channels) st.channels = {};
     const max = this.config.maxDb;
 
-    const targets = group.channels.map((ch) => ({ ch, db: this.channelDb(groupDb, st.offsets[ch]) }));
+    const channels = group.channels || [];
+    const N = channels.length;
+
+    if (N === 0) {
+      st.groups[groupId] = step;
+      return { ok: true, group: groupId, step };
+    }
+
+    // Nível atual de cada peça e soma total
+    let currentSum = 0;
+    const currentLevels = {};
+    for (const ch of channels) {
+      const cur = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[groupId] ?? 3);
+      currentLevels[ch] = cur;
+      currentSum += cur;
+    }
+
+    // Se nível 0 (mudo geral da bateria/grupo)
+    if (step === 0) {
+      if (currentSum > 0) {
+        st.savedRatios = st.savedRatios || {};
+        st.savedRatios[groupId] = {};
+        for (const ch of channels) {
+          st.savedRatios[groupId][ch] = currentLevels[ch] / currentSum;
+        }
+      }
+      st.groups[groupId] = 0;
+      for (const ch of channels) {
+        st.channels[ch] = 0;
+        await this.driver.setAuxSend(aux, ch, null);
+      }
+      return { ok: true, group: groupId, step: 0 };
+    }
+
+    // Calcula os novos níveis de cada peça baseados na proporção sobre a soma total
+    const targetSum = step * N;
+    const newLevels = {};
+    const targets = [];
+
+    if (currentSum === 0) {
+      const ratios = (st.savedRatios && st.savedRatios[groupId]) || null;
+      for (const ch of channels) {
+        let newLvl = step;
+        if (ratios && ratios[ch] !== undefined) {
+          const minVal = ratios[ch] > 0 ? 1 : 0;
+          newLvl = Math.max(minVal, Math.min(4, Math.round(ratios[ch] * targetSum)));
+        }
+        newLevels[ch] = newLvl;
+        const chDb = this.stepToDb(newLvl);
+        const finalDb = this.channelDb(chDb, st.offsets[ch]);
+        targets.push({ ch, db: finalDb });
+      }
+    } else {
+      for (const ch of channels) {
+        let newLvl = 0;
+        if (currentLevels[ch] > 0) {
+          const ratio = currentLevels[ch] / currentSum;
+          newLvl = Math.max(1, Math.min(4, Math.round(ratio * targetSum)));
+        }
+        newLevels[ch] = newLvl;
+        const chDb = this.stepToDb(newLvl);
+        const finalDb = this.channelDb(chDb, st.offsets[ch]);
+        targets.push({ ch, db: finalDb });
+      }
+    }
+
     const over = targets.some((t) => t.db !== null && t.db > max);
     if (over && this.config.groupLimitBehavior === 'stop') {
       return { ok: false, reason: 'limite', group: groupId };
     }
 
-    // Regra 1: Mudar o master do grupo NÃO altera o volume de cada peça (st.channels)
     st.groups[groupId] = step;
     for (const t of targets) {
+      st.channels[t.ch] = newLevels[t.ch];
       const db = t.db === null ? null : Math.min(t.db, max);
       await this.driver.setAuxSend(aux, t.ch, db);
     }
@@ -54,7 +164,21 @@ class Mix {
     const st = this.auxState(aux);
     if (!st.channels) st.channels = {};
     st.channels[channel] = step;
-    await this.driver.setAuxSend(aux, channel, chDb === null ? null : Math.min(chDb, this.config.maxDb));
+
+    // Recalcular o nível geral do grupo baseado na soma/média das peças
+    const group = this.config.groups.find((g) => g.channels.includes(channel));
+    if (group && group.channels && group.channels.length > 0) {
+      let sum = 0;
+      for (const ch of group.channels) {
+        const s = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[group.id] ?? 3);
+        sum += s;
+      }
+      const avg = sum / group.channels.length;
+      st.groups[group.id] = Math.max(0, Math.min(4, Math.round(avg)));
+    }
+
+    const finalDb = chDb === null ? null : Math.min(this.channelDb(chDb, st.offsets[channel]), this.config.maxDb);
+    await this.driver.setAuxSend(aux, channel, finalDb);
     return { ok: true, channel, step };
   }
 
@@ -64,7 +188,7 @@ class Mix {
     if (!group) throw new Error(`Canal ${channel} não pertence a nenhum grupo`);
     const st = this.auxState(aux);
     st.offsets[channel] = (st.offsets[channel] || 0) + deltaDb;
-    const step = st.groups[group.id] ?? 2;
+    const step = st.groups[group.id] ?? 3;
     const db = this.channelDb(this.stepToDb(step), st.offsets[channel]);
     await this.driver.setAuxSend(aux, channel, db === null ? null : Math.min(db, this.config.maxDb));
     return { ok: true, channel, offset: st.offsets[channel] };
@@ -87,6 +211,7 @@ class Mix {
     for (const [g, s] of Object.entries(snap.groups || {})) await this.setGroupLevel(aux, g, s);
     for (const [ch, s] of Object.entries(snap.channels || {})) await this.setChannelLevel(aux, Number(ch), s);
     for (const [t, s] of Object.entries(snap.fixed || {})) await this.setFixedLevel(aux, t, s);
+    this.initialized.add(aux);
   }
 }
 

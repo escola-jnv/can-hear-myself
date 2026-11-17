@@ -441,6 +441,23 @@
   // Modal de ajuda
   renderHelpMenu();
 
+  // Salvar minha mix: o servidor guarda por pessoa + instrumento + aux e recarrega ao entrar
+  $('save-mix-btn').onclick = function () {
+    Socket.send({ type: 'savePreset' });
+  };
+  Socket.on('presetSaved', function () {
+    var b = $('save-mix-btn');
+    if (!b) return;
+    b.className = 'save-btn saved';
+    b.innerHTML = '<i data-lucide="check"></i><span>Salvo</span>';
+    refreshIcons();
+    setTimeout(function () {
+      b.className = 'save-btn';
+      b.innerHTML = '<i data-lucide="save"></i><span>Salvar</span>';
+      refreshIcons();
+    }, 2500);
+  });
+
   $('help-btn').onclick = function () {
     $('help-sheet').className = 'sheet on';
     refreshIcons();

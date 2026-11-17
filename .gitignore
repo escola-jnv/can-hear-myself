@@ -8,3 +8,5 @@ desktop/src-tauri/target/
 build/.cache/
 server/embedded-assets.js
 *.log
+build/*.txt
+_to_delete/

@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "name": "Primeiro Som",
+  "date": "2026-11-17",
+  "highlights": ["Primeira versão: cada músico controla a própria mix de fone pelo celular"],
+  "items": [
+    { "area": "App do Músico", "audience": "[MÚSICO]", "category": "Nova Feature", "text": "Escolha de nome, instrumento e saída, com 5 níveis por grupo de instrumentos." },
+    { "area": "Pedido de Ajuda", "audience": "[MÚSICO & TÉCNICO]", "category": "Nova Feature", "text": "Botão de ajuda com 5 motivos que avisa o técnico na hora." },
+    { "area": "Mesa Virtual", "audience": "[TÉCNICO]", "category": "Nova Feature", "text": "Testar tudo sem a mesa de som ligada." }
+  ]
+}
