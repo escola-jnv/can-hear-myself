@@ -5,7 +5,7 @@ const os = require('os');
 
 const config = require('./config');
 const { createDriver } = require('./drivers');
-const { findMixer } = require('./discovery/find-mixer');
+const { findMixer, detectMixer } = require('./discovery/find-mixer');
 const Store = require('./storage/store');
 const Hub = require('./realtime/hub');
 const Mix = require('./core/mix');
@@ -200,8 +200,18 @@ function buildStatus(req) {
 }
 
 const server = http.createServer((req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (req.url === '/api/config') {
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    return res.end();
+  }
+
+  const urlPath = (req.url || '').split('?')[0].replace(/\/+$/, '') || '/';
+
+  if (urlPath === '/api/config') {
     if (req.method === 'POST') {
       if (!isLocalRequest(req)) {
         res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -258,12 +268,7 @@ const server = http.createServer((req, res) => {
     }));
   }
 
-  if (req.url.startsWith('/api/mixer/') && !isLocalRequest(req)) {
-    res.writeHead(403, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ ok: false, error: 'A mesa só pode ser trocada no computador do servidor.' }));
-  }
-
-  if (req.url === '/api/mixer/scan') {
+  if (urlPath === '/api/mixer/scan') {
     findMixer()
       .then((result) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -276,14 +281,28 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/api/mixer/connect' && req.method === 'POST') {
+  if (urlPath === '/api/mixer/connect' && req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => { body += chunk; });
     req.on('end', async () => {
       try {
-        const data = JSON.parse(body);
-        const model = (data.model || 'mock').toLowerCase();
-        const ip = data.ip !== undefined ? data.ip : (model === 'mock' ? 'local' : '10.10.1.1');
+        const data = JSON.parse(body || '{}');
+        let model = (data.model || '').toLowerCase();
+        let ip = data.ip !== undefined ? String(data.ip).trim() : '';
+
+        if (!model || model === 'auto') {
+          if (!ip || ip === 'local' || ip === 'mock') {
+            model = 'mock';
+            ip = 'local';
+          } else {
+            const detected = await detectMixer(ip);
+            model = detected.model;
+            ip = detected.ip;
+          }
+        } else if (model === 'mock') {
+          ip = 'local';
+        }
+
         const mixerStatus = await setMixer(model, ip);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ ok: true, mixer: mixerStatus }));
@@ -295,11 +314,12 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.url === '/api/status') {
+  if (urlPath === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(buildStatus(req)));
   }
-  const rel = req.url === '/' ? '/index.html' : decodeURIComponent(req.url.split('?')[0]);
+
+  const rel = urlPath === '/' ? '/index.html' : decodeURIComponent(urlPath);
   const publicDir = findPublicDir();
   if (publicDir) {
     const file = path.normalize(path.join(publicDir, rel));
@@ -350,13 +370,17 @@ hub = new Hub(server, async (ws, msg) => {
       const r = sessions.join(aux, { clientId: ws.id, person: msg.person, instrument: msg.instrument, device });
       if (!r.ok) return hub.send(ws, { type: 'auxTaken', aux, by: r.takenBy });
       ws.who = { person: msg.person, instrument: msg.instrument, aux, device };
-      const saved = presets.load(ws.who);
-      if (saved) {
-        await mix.apply(aux, saved);
-        mix.setAuxPerson(aux, msg.person);
-      } else if (!mix.isInitialized(aux) || mix.getAuxPerson(aux) !== msg.person) {
-        await mix.initAux(aux);
-        mix.setAuxPerson(aux, msg.person);
+      try {
+        const saved = presets.load(ws.who);
+        if (saved) {
+          await mix.apply(aux, saved);
+          mix.setAuxPerson(aux, msg.person);
+        } else if (!mix.isInitialized(aux) || mix.getAuxPerson(aux) !== msg.person) {
+          await mix.initAux(aux);
+          mix.setAuxPerson(aux, msg.person);
+        }
+      } catch (err) {
+        console.warn(`[mix] Aviso ao inicializar aux ${aux}:`, err.message);
       }
       log.add({ person: msg.person, action: 'entrou', aux, instrument: msg.instrument });
       hub.broadcast({ type: 'sessions', sessions: sessions.list() }, (c) => c.role !== 'musician');
@@ -364,27 +388,47 @@ hub = new Hub(server, async (ws, msg) => {
     }
     case 'setGroupLevel': {
       if (!who) return;
-      const r = await mix.setGroupLevel(who.aux, msg.group, Number(msg.step));
-      if (r.ok) log.add({ person: who.person, action: 'nível do grupo', target: msg.group, value: r.step, aux: who.aux });
-      return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who, warning: r.ok ? undefined : r.reason });
+      try {
+        const r = await mix.setGroupLevel(who.aux, msg.group, Number(msg.step));
+        if (r.ok) log.add({ person: who.person, action: 'nível do grupo', target: msg.group, value: r.step, aux: who.aux });
+        return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who, warning: r.ok ? undefined : r.reason });
+      } catch (err) {
+        console.warn('[mix] Erro setGroupLevel:', err.message);
+        return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
+      }
     }
     case 'setChannelLevel': {
       if (!who) return;
-      const r = await mix.setChannelLevel(who.aux, Number(msg.channel), Number(msg.step));
-      const chName = (config.channelNames && config.channelNames[msg.channel]) || `canal ${msg.channel}`;
-      if (r.ok) log.add({ person: who.person, action: 'nível de canal', target: chName, value: r.step, aux: who.aux });
+      try {
+        const r = await mix.setChannelLevel(who.aux, Number(msg.channel), Number(msg.step));
+        const chName = (config.channelNames && config.channelNames[msg.channel]) || `canal ${msg.channel}`;
+        if (r.ok) log.add({ person: who.person, action: 'nível de canal', target: chName, value: r.step, aux: who.aux });
+        return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
+      } catch (err) {
+        console.warn('[mix] Erro setChannelLevel:', err.message);
+        return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
+      }
+    }
+    case 'setFixedLevel': {
+      if (!who) return;
+      try {
+        await mix.setFixedLevel(who.aux, msg.target, Number(msg.step));
+        log.add({ person: who.person, action: 'nível', target: msg.target, value: msg.step, aux: who.aux });
+      } catch (err) {
+        console.warn('[mix] Erro setFixedLevel:', err.message);
+      }
       return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
     }
-    case 'setFixedLevel':
+    case 'nudgeChannel': {
       if (!who) return;
-      await mix.setFixedLevel(who.aux, msg.target, Number(msg.step));
-      log.add({ person: who.person, action: 'nível', target: msg.target, value: msg.step, aux: who.aux });
+      try {
+        await mix.nudgeChannel(who.aux, Number(msg.channel), Number(msg.deltaDb));
+        log.add({ person: who.person, action: 'ajuste fino', target: `canal ${msg.channel}`, value: msg.deltaDb, aux: who.aux });
+      } catch (err) {
+        console.warn('[mix] Erro nudgeChannel:', err.message);
+      }
       return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
-    case 'nudgeChannel':
-      if (!who) return;
-      await mix.nudgeChannel(who.aux, Number(msg.channel), Number(msg.deltaDb));
-      log.add({ person: who.person, action: 'ajuste fino', target: `canal ${msg.channel}`, value: msg.deltaDb, aux: who.aux });
-      return hub.send(ws, { type: 'state', ...mix.snapshot(who.aux), who });
+    }
     case 'savePreset':
       if (!who) return;
       presets.save(who, msg.name, mix.snapshot(who.aux));

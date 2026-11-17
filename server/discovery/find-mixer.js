@@ -6,7 +6,7 @@ const dgram = require('dgram');
  * Filtra interfaces virtuais que costumam ter redes gigantes (ex: Hyper-V, WSL, Docker).
  */
 function isVirtualInterface(name) {
-  const n = name.toLowerCase();
+  const n = (name || '').toLowerCase();
   return n.includes('vethernet') || n.includes('wsl') || n.includes('docker') || n.includes('vbox') || n.includes('virtual');
 }
 
@@ -54,9 +54,37 @@ function getScanTargets() {
 }
 
 /**
+ * Checa se o texto de resposta HTTP pertence a uma mesa Soundcraft Ui.
+ */
+function isSoundcraftResponse(str) {
+  if (!str) return false;
+  const lower = str.toLowerCase();
+  return (
+    lower.includes('soundcraft') ||
+    lower.includes('ui24') ||
+    lower.includes('ui16') ||
+    lower.includes('ui12') ||
+    lower.includes('harman') ||
+    lower.includes('ui-app') ||
+    lower.includes('ui.soundcraft.com') ||
+    lower.includes('ui_') ||
+    lower.includes('uiwebtracker') ||
+    lower.includes('<title>ui') ||
+    (lower.includes('location:') && (lower.includes('/ui') || lower.includes('/ui-app') || lower.includes(':80')))
+  );
+}
+
+function parseSoundcraftName(str) {
+  const lower = (str || '').toLowerCase();
+  if (lower.includes('ui16')) return 'Soundcraft Ui16';
+  if (lower.includes('ui12')) return 'Soundcraft Ui12';
+  return 'Soundcraft Ui24R';
+}
+
+/**
  * Testa se um IP é uma mesa Soundcraft Ui (porta 80 HTTP).
  */
-function probeSoundcraft(ip, timeout = 400) {
+function probeSoundcraft(ip, timeout = 1200) {
   return new Promise((resolve) => {
     const socket = new net.Socket();
     let resolved = false;
@@ -80,27 +108,134 @@ function probeSoundcraft(ip, timeout = 400) {
 
     socket.on('data', (chunk) => {
       data += chunk.toString('utf8');
-      if (data.length > 4096) checkContent();
+      if (isSoundcraftResponse(data)) {
+        return done({ model: 'ui24r', name: parseSoundcraftName(data), ip });
+      }
     });
 
-    socket.on('end', () => checkContent());
+    socket.on('end', () => {
+      if (isSoundcraftResponse(data)) {
+        return done({ model: 'ui24r', name: parseSoundcraftName(data), ip });
+      }
+      done(null);
+    });
+
     socket.on('timeout', () => done(null));
     socket.on('error', () => done(null));
 
-    function checkContent() {
-      const lower = data.toLowerCase();
-      if (lower.includes('soundcraft') || lower.includes('ui24') || lower.includes('ui16') || lower.includes('ui12')) {
-        let name = 'Soundcraft Ui24R';
-        if (lower.includes('ui16')) name = 'Soundcraft Ui16';
-        else if (lower.includes('ui12')) name = 'Soundcraft Ui12';
-        return done({ model: 'ui24r', name, ip });
-      }
-      if (data.startsWith('HTTP/') && (lower.includes('harman') || lower.includes('ui-app'))) {
-        return done({ model: 'ui24r', name: 'Soundcraft Ui24R', ip });
-      }
+    try {
+      socket.connect(80, ip);
+    } catch {
       done(null);
     }
   });
+}
+
+/**
+ * Envia /xinfo via OSC unicast para testar se uma mesa Behringer/Midas está no IP.
+ */
+function probeBehringerOscUnicast(ip, waitMs = 1500) {
+  return new Promise((resolve) => {
+    const ports = [10024, 10023]; // 10024 = XAir, 10023 = X32
+    const sockets = [];
+    let resolved = false;
+
+    const done = (res) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
+      sockets.forEach((s) => { try { s.close(); } catch {} });
+      resolve(res);
+    };
+
+    const timer = setTimeout(() => done(null), waitMs);
+    const oscMessage = Buffer.from('/xinfo\0\0', 'ascii');
+
+    ports.forEach((port) => {
+      try {
+        const client = dgram.createSocket('udp4');
+        sockets.push(client);
+        client.on('message', (msg, rinfo) => {
+          try {
+            const str = msg.toString('latin1');
+            if (str.startsWith('/xinfo')) {
+              const parts = str.split('\0').filter((s) => s.trim().length > 0);
+              const args = parts.filter((p) => !p.startsWith('/') && !p.startsWith(','));
+              const mixerModel = args[2] || (port === 10024 ? 'XR18' : 'X32');
+              const mixerName = args[1] || '';
+              const mixerVer = args[3] || '';
+              const isXAir = port === 10024 || /XR|XAIR|X18/i.test(mixerModel);
+              return done({
+                model: isXAir ? 'xair' : 'x32',
+                name: `Behringer ${mixerModel}${mixerName ? ' (' + mixerName + ')' : ''}${mixerVer ? ' v' + mixerVer : ''}`,
+                ip
+              });
+            }
+          } catch {}
+        });
+        client.on('error', () => {});
+        client.bind(0, () => {
+          try {
+            client.send(oscMessage, 0, oscMessage.length, port, ip, () => {});
+          } catch {}
+        });
+      } catch {}
+    });
+  });
+}
+
+/**
+ * Testa se uma porta TCP está respondendo.
+ */
+function probeTcpPort(ip, port = 80, timeout = 1000) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let finished = false;
+    const done = (ok) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      try { socket.destroy(); } catch {}
+      resolve(ok);
+    };
+    const timer = setTimeout(() => done(false), timeout + 50);
+    socket.setTimeout(timeout);
+    socket.on('connect', () => done(true));
+    socket.on('timeout', () => done(false));
+    socket.on('error', () => done(false));
+    try {
+      socket.connect(port, ip);
+    } catch {
+      done(false);
+    }
+  });
+}
+
+/**
+ * Identifica automaticamente o modelo da mesa a partir do IP informado.
+ */
+async function detectMixer(ip) {
+  if (!ip || ip === 'local' || ip === 'mock') {
+    return { model: 'mock', name: 'Mesa Virtual (Mock)', ip: 'local', detected: true };
+  }
+  const cleanIp = String(ip).trim();
+
+  // 1. Tentar Soundcraft Ui na porta 80 HTTP
+  const sc = await probeSoundcraft(cleanIp, 2500);
+  if (sc) return { ...sc, detected: true };
+
+  // 2. Tentar Behringer OSC unicast (10024 = XAir, 10023 = X32)
+  const beh = await probeBehringerOscUnicast(cleanIp, 1500);
+  if (beh) return { ...beh, detected: true };
+
+  // 3. Checar porta 80 aberta (comum em Soundcraft Ui mesmo se a resposta for atípica)
+  const port80 = await probeTcpPort(cleanIp, 80, 1000);
+  if (port80) {
+    return { model: 'ui24r', name: 'Soundcraft Ui24R', ip: cleanIp, detected: true };
+  }
+
+  // 4. Fallback padrão se não responder
+  return { model: 'ui24r', name: 'Soundcraft Ui24R', ip: cleanIp, detected: false };
 }
 
 /**
@@ -114,7 +249,7 @@ async function scanSoundcraftList(ips, concurrency = 60) {
     while (index < ips.length) {
       const currentIp = ips[index++];
       try {
-        const found = await probeSoundcraft(currentIp);
+        const found = await probeSoundcraft(currentIp, 1200);
         if (found) results.push(found);
       } catch {}
     }
@@ -231,4 +366,10 @@ async function findMixer(options = {}) {
   };
 }
 
-module.exports = { findMixer, getScanTargets };
+module.exports = {
+  findMixer,
+  getScanTargets,
+  detectMixer,
+  probeSoundcraft,
+  isSoundcraftResponse
+};

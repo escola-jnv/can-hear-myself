@@ -122,7 +122,7 @@
       var b = document.createElement('button');
       b.textContent = it.label || it;
       if (it.cls) b.className = it.cls;
-      b.onclick = function () { onPick(it); };
+      b.onclick = function () { onPick(it, b); };
       el.appendChild(b);
     });
     refreshIcons();
@@ -170,8 +170,9 @@
   }
 
   function askAux() {
-    list($('auxes'), cfg.auxes.map(function (a) { return { label: a.name, id: a.id }; }), function (a) {
+    list($('auxes'), cfg.auxes.map(function (a) { return { label: a.name, id: a.id }; }), function (a, b) {
       who.aux = a.id;
+      if (b) b.textContent = 'Entrando em ' + a.label + '...';
       join();
     });
     show('s-aux');
@@ -391,8 +392,12 @@
   // Eventos WebSocket
   Socket.on('state', function (m) {
     state = m;
+    if (m.who) who = Object.assign(who || {}, m.who);
     renderMix();
     if (m.warning === 'limite') alert('Um canal chegou no volume máximo.');
+  });
+  Socket.on('error', function (m) {
+    alert('Aviso do servidor: ' + (m.message || 'Erro inesperado'));
   });
   Socket.on('auxTaken', function (m) {
     alert('A Aux ' + m.aux + ' já está com ' + m.by + '.');
