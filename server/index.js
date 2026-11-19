@@ -329,6 +329,7 @@ const server = http.createServer((req, res) => {
           if (data.fixed && typeof data.fixed === 'object') config.fixed = data.fixed;
           if (Array.isArray(data.auxes)) config.auxes = data.auxes;
           if (data.channelNames && typeof data.channelNames === 'object') config.channelNames = data.channelNames;
+          if (data.channelIcons && typeof data.channelIcons === 'object') config.channelIcons = data.channelIcons;
           if (data.mixer && typeof data.mixer === 'object') {
             if (data.mixer.model) config.mixer.model = data.mixer.model;
             if (data.mixer.ip !== undefined) config.mixer.ip = data.mixer.ip;
@@ -344,7 +345,8 @@ const server = http.createServer((req, res) => {
                 groups: config.groups,
                 auxes: config.auxes,
                 fixed: config.fixed,
-                channelNames: config.channelNames || {}
+                channelNames: config.channelNames || {},
+                channelIcons: config.channelIcons || {}
               }
             });
           }
@@ -363,10 +365,12 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       levels: config.levels,
+      defaultLevel: config.defaultLevel,
       groups: config.groups,
       auxes: config.auxes,
       fixed: config.fixed,
       channelNames: config.channelNames || {},
+      channelIcons: config.channelIcons || {},
       mixer: config.mixer
     }));
   }

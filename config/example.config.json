@@ -6,12 +6,19 @@
   },
   "levels": [
     { "step": 0, "label": "Desligado", "db": null },
-    { "step": 1, "label": "Baixo", "db": -20 },
-    { "step": 2, "label": "Médio", "db": -10 },
-    { "step": 3, "label": "Alto", "db": -5 },
-    { "step": 4, "label": "Cheio", "db": 0 }
+    { "step": 1, "label": "1 (-30dB)", "db": -30 },
+    { "step": 2, "label": "2 (-25.6dB)", "db": -25.6 },
+    { "step": 3, "label": "3 (-21.1dB)", "db": -21.1 },
+    { "step": 4, "label": "4 (-16.7dB)", "db": -16.7 },
+    { "step": 5, "label": "5 (-12.2dB)", "db": -12.2 },
+    { "step": 6, "label": "6 (-7.8dB)", "db": -7.8 },
+    { "step": 7, "label": "7 (-3.3dB)", "db": -3.3 },
+    { "step": 8, "label": "8 (+1.1dB)", "db": 1.1 },
+    { "step": 9, "label": "9 (+5.6dB)", "db": 5.6 },
+    { "step": 10, "label": "10 (+10dB)", "db": 10 }
   ],
-  "maxDb": 0,
+  "defaultLevel": 7,
+  "maxDb": 10,
   "groupLimitBehavior": "stop",
   "auxes": [
     { "id": 1, "name": "DRUM" },
@@ -60,6 +67,13 @@
     "22": "VS L",
     "23": "VS R",
     "24": "LIVRE"
+  },
+  "channelIcons": {
+    "8": "mic",
+    "9": "mic",
+    "10": "mic",
+    "11": "mic",
+    "12": "mic"
   },
   "proske": {
     "url": "https://app.proske.com.br",
