@@ -1,0 +1,42 @@
+{
+  "version": "0.2.2",
+  "name": "Palco Afinado",
+  "date": "2026-11-19",
+  "highlights": [
+    "QR Code no Painel do Técnico para conexão rápida dos músicos",
+    "Escala de volume expandida para 0 a 10 com proporção sonora precisa",
+    "Correção no fader master do fone para mesas Soundcraft Ui24R"
+  ],
+  "items": [
+    {
+      "area": "Painel do Técnico",
+      "audience": "[TÉCNICO]",
+      "category": "Nova Feature",
+      "text": "Exibição de QR Code direto na tela inicial do técnico para que os músicos conectem seus celulares instantaneamente, incluindo opção de ampliar o código na tela."
+    },
+    {
+      "area": "Painel do Técnico",
+      "audience": "[TÉCNICO]",
+      "category": "Nova Feature",
+      "text": "Personalização de ícones para cada canal da mesa de som, facilitando a identificação visual de microfones e instrumentos no palco."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO & TÉCNICO]",
+      "category": "Feature Melhora",
+      "text": "Escala de volume ampliada de 0 a 10 (nível 0 mudo, nível 1 em -30 dB até nível 10 em +10 dB), oferecendo ajuste mais gradual e preciso para o retorno."
+    },
+    {
+      "area": "Mesa de Som",
+      "audience": "[MÚSICO]",
+      "category": "Correção de Bug",
+      "text": "O botão de volume master do fone no celular agora ajusta corretamente o volume de saída do auxiliar na mesa de som Soundcraft Ui24R."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO]",
+      "category": "Correção de Bug",
+      "text": "Desativado o zoom indesejado na tela do celular ao tocar repetidamente nos botões de controle em iPhones e aparelhos móveis."
+    }
+  ]
+}

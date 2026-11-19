@@ -1,8 +1,12 @@
 # Regras de negócio
 
 ## Níveis
-- 5 níveis por grupo/canal (0 a 4), definidos em `config.levels`. Nível 0 = desligado (mute do envio).
-- Nenhum envio passa de `config.maxDb`.
+- 11 níveis por grupo/canal (0 a 10), definidos em `config.levels`:
+  - Nível 0 = Mudo (mute do envio / null)
+  - Nível 1 = -30 dB
+  - Nível 10 = +10 dB
+  - Níveis 2 a 9 distribuídos proporcionalmente (~4.4 dB por passo)
+- Nenhum envio passa de `config.maxDb` (10 dB).
 
 ## Grupos virtuais
 - Um grupo move os envios aux de todos os seus canais juntos.
@@ -16,7 +20,7 @@
 ## Presets ("Salvar minha mix")
 - Botão **Salvar** no app do músico. Chave: pessoa + instrumento + aux. Salvos no servidor em `data/presets/`.
 - Ao entrar de novo com a mesma pessoa, instrumento e aux, a mix salva volta sozinha.
-- Sem preset salvo: tudo começa no **nível 3** (grupos, canais, master, clique e talkback).
+- Sem preset salvo: tudo começa no **nível 7** (grupos, canais, master, clique e talkback).
 
 ## Pedidos de ajuda
 1. Não estou me ouvindo
