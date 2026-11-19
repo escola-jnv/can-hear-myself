@@ -11,23 +11,36 @@ class Mix {
     this.auxPersons = {};
   }
 
+  getMaxStep() {
+    if (this.config.levels && this.config.levels.length > 0) {
+      return Math.max(...this.config.levels.map((l) => l.step));
+    }
+    return 10;
+  }
+
+  getDefaultLevel() {
+    if (this.config.defaultLevel !== undefined) return this.config.defaultLevel;
+    return 7;
+  }
+
   defaultAuxState() {
+    const def = this.getDefaultLevel();
     const groups = {};
     const channels = {};
     if (this.config.groups) {
       for (const g of this.config.groups) {
-        groups[g.id] = 3;
+        groups[g.id] = def;
         if (g.channels) {
           for (const ch of g.channels) {
-            channels[ch] = 3;
+            channels[ch] = def;
           }
         }
       }
     }
-    const fixed = { master: 3, click: 3, talkback: 3 };
+    const fixed = { master: def, click: def, talkback: def };
     if (this.config.fixed) {
       for (const k of Object.keys(this.config.fixed)) {
-        fixed[k] = 3;
+        fixed[k] = def;
       }
     }
     return { groups, fixed, channels, offsets: {} };
@@ -87,11 +100,14 @@ class Mix {
       return { ok: true, group: groupId, step };
     }
 
+    const maxStep = this.getMaxStep();
+    const def = this.getDefaultLevel();
+
     // Nível atual de cada peça e soma total
     let currentSum = 0;
     const currentLevels = {};
     for (const ch of channels) {
-      const cur = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[groupId] ?? 3);
+      const cur = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[groupId] ?? def);
       currentLevels[ch] = cur;
       currentSum += cur;
     }
@@ -124,7 +140,7 @@ class Mix {
         let newLvl = step;
         if (ratios && ratios[ch] !== undefined) {
           const minVal = ratios[ch] > 0 ? 1 : 0;
-          newLvl = Math.max(minVal, Math.min(4, Math.round(ratios[ch] * targetSum)));
+          newLvl = Math.max(minVal, Math.min(maxStep, Math.round(ratios[ch] * targetSum)));
         }
         newLevels[ch] = newLvl;
         const chDb = this.stepToDb(newLvl);
@@ -136,7 +152,7 @@ class Mix {
         let newLvl = 0;
         if (currentLevels[ch] > 0) {
           const ratio = currentLevels[ch] / currentSum;
-          newLvl = Math.max(1, Math.min(4, Math.round(ratio * targetSum)));
+          newLvl = Math.max(1, Math.min(maxStep, Math.round(ratio * targetSum)));
         }
         newLevels[ch] = newLvl;
         const chDb = this.stepToDb(newLvl);
@@ -169,12 +185,13 @@ class Mix {
     const group = this.config.groups.find((g) => g.channels.includes(channel));
     if (group && group.channels && group.channels.length > 0) {
       let sum = 0;
+      const def = this.getDefaultLevel();
       for (const ch of group.channels) {
-        const s = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[group.id] ?? 3);
+        const s = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[group.id] ?? def);
         sum += s;
       }
       const avg = sum / group.channels.length;
-      st.groups[group.id] = Math.max(0, Math.min(4, Math.round(avg)));
+      st.groups[group.id] = Math.max(0, Math.min(this.getMaxStep(), Math.round(avg)));
     }
 
     const finalDb = chDb === null ? null : Math.min(this.channelDb(chDb, st.offsets[channel]), this.config.maxDb);
@@ -188,7 +205,7 @@ class Mix {
     if (!group) throw new Error(`Canal ${channel} não pertence a nenhum grupo`);
     const st = this.auxState(aux);
     st.offsets[channel] = (st.offsets[channel] || 0) + deltaDb;
-    const step = st.groups[group.id] ?? 3;
+    const step = st.groups[group.id] ?? this.getDefaultLevel();
     const db = this.channelDb(this.stepToDb(step), st.offsets[channel]);
     await this.driver.setAuxSend(aux, channel, db === null ? null : Math.min(db, this.config.maxDb));
     return { ok: true, channel, offset: st.offsets[channel] };

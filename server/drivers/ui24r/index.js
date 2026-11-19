@@ -41,7 +41,7 @@ class Ui24rDriver extends MixerDriver {
   async setAuxMaster(aux, db) {
     if (!this.conn) return;
     try {
-      const master = this.conn.aux(aux);
+      const master = this.conn.master.aux(aux);
       if (db === null) return master.mute();
       master.unmute();
       master.setFaderLevelDB(db);
