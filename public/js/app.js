@@ -97,6 +97,7 @@
 
   function getPieceIcon(name) {
     var n = (name || '').toLowerCase();
+    if (n.indexOf('mic') !== -1 || n.indexOf('voz') !== -1 || n.indexOf('shure') !== -1 || n.indexOf('dylan') !== -1 || n.indexOf('pastor') !== -1) return 'mic';
     if (n.indexOf('bumbo') !== -1 || n.indexOf('kick') !== -1 || n.indexOf('bd') !== -1) return 'drum-kick';
     if (n.indexOf('caixa') !== -1 || n.indexOf('snare') !== -1 || n.indexOf('sd') !== -1) return 'drum-snare';
     if (n.indexOf('chimbal') !== -1 || n.indexOf('hihat') !== -1 || n.indexOf('hh') !== -1) return 'drum-hihat';
@@ -268,38 +269,370 @@
     }
   }
 
+  // Mapeamento inteligente do instrumento tocado para o grupo correspondente
+  function findInstrumentGroup(instrumentName, groups) {
+    if (!instrumentName || !groups || !groups.length) return null;
+    var normInst = String(instrumentName).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i];
+      var normId = String(g.id || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      var normName = String(g.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      if (normInst === 'voz' && (normId.indexOf('voz') !== -1 || normName.indexOf('voz') !== -1 || normId.indexOf('vocal') !== -1)) {
+        return g.id;
+      }
+      if (normInst === 'violao' && (normId.indexOf('viol') !== -1 || normName.indexOf('viol') !== -1)) {
+        return g.id;
+      }
+      if (normInst === 'guitarra' && (normId.indexOf('guit') !== -1 || normName.indexOf('guit') !== -1)) {
+        return g.id;
+      }
+      if (normInst === 'baixo' && (normId.indexOf('baix') !== -1 || normName.indexOf('baix') !== -1 || normId.indexOf('bass') !== -1)) {
+        return g.id;
+      }
+      if (normInst === 'teclado' && (normId.indexOf('tecl') !== -1 || normName.indexOf('tecl') !== -1 || normId.indexOf('key') !== -1)) {
+        return g.id;
+      }
+      if (normInst === 'bateria' && (normId.indexOf('bater') !== -1 || normName.indexOf('bater') !== -1 || normId.indexOf('drum') !== -1)) {
+        return g.id;
+      }
+      if (normId.indexOf(normInst) !== -1 || normInst.indexOf(normId) !== -1 || normName.indexOf(normInst) !== -1) {
+        return g.id;
+      }
+    }
+    return null;
+  }
+
+  // 4. Por padrão: Master na pos 1, depois Talk, depois Click, depois o instrumento tocado, depois o restante
+  function getDefaultChannelOrder() {
+    var order = [];
+    order.push('fixed:master');
+    order.push('fixed:talkback');
+    order.push('fixed:click');
+
+    var myGroupId = findInstrumentGroup(who ? who.instrument : null, (cfg && cfg.groups) ? cfg.groups : []);
+    if (myGroupId) {
+      order.push('group:' + myGroupId);
+    }
+
+    if (cfg && cfg.groups) {
+      cfg.groups.forEach(function (g) {
+        var key = 'group:' + g.id;
+        if (order.indexOf(key) === -1) {
+          order.push(key);
+        }
+      });
+    }
+
+    return order;
+  }
+
+  function getChannelPrefsKey() {
+    var person = (who && who.person) ? who.person.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_') : 'default';
+    var inst = (who && who.instrument) ? who.instrument.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_') : 'default';
+    return 'chm_channels_' + person + '_' + inst;
+  }
+
+  function loadChannelPrefs() {
+    try {
+      var raw = localStorage.getItem(getChannelPrefsKey());
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.order)) return parsed;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function saveChannelPrefs(prefs) {
+    try {
+      localStorage.setItem(getChannelPrefsKey(), JSON.stringify(prefs));
+    } catch (e) {}
+  }
+
+  function getEffectiveChannelConfig() {
+    var defOrder = getDefaultChannelOrder();
+    var prefs = loadChannelPrefs();
+
+    if (!prefs) {
+      return {
+        order: defOrder,
+        pinned: [] // Por padrão: nenhum canal fixado no topo
+      };
+    }
+
+    var order = [];
+    (prefs.order || []).forEach(function (id) {
+      if (defOrder.indexOf(id) !== -1) {
+        order.push(id);
+      }
+    });
+    defOrder.forEach(function (id) {
+      if (order.indexOf(id) === -1) {
+        order.push(id);
+      }
+    });
+
+    var pinned = [];
+    (prefs.pinned || []).forEach(function (id) {
+      if (order.indexOf(id) !== -1) {
+        pinned.push(id);
+      }
+    });
+
+    return { order: order, pinned: pinned };
+  }
+
+  function togglePin(id) {
+    var c = getEffectiveChannelConfig();
+    var pinned = c.pinned.slice();
+    var idx = pinned.indexOf(id);
+    if (idx !== -1) {
+      pinned.splice(idx, 1);
+    } else {
+      pinned.push(id);
+    }
+    saveChannelPrefs({
+      order: c.order,
+      pinned: pinned
+    });
+    renderMix();
+    if ($('reorder-sheet') && $('reorder-sheet').classList.contains('on')) {
+      renderReorderList();
+    }
+  }
+
+  function getItemMeta(id) {
+    if (id === 'fixed:master') {
+      return { id: id, name: 'Master', color: '#F5A524', icon: 'volume-2', type: 'fixed', target: 'master' };
+    }
+    if (id === 'fixed:talkback') {
+      return { id: id, name: 'Talkback', color: '#94A3B8', icon: 'headset', type: 'fixed', target: 'talkback' };
+    }
+    if (id === 'fixed:click') {
+      return { id: id, name: 'Clique', color: '#94A3B8', icon: 'timer', type: 'fixed', target: 'click' };
+    }
+    if (id.indexOf('group:') === 0) {
+      var gid = id.substring(6);
+      var g = (cfg.groups || []).find(function (item) { return item.id === gid; });
+      if (g) {
+        return { id: id, name: g.name, color: g.color, icon: getGroupIcon(g), type: 'group', group: g };
+      }
+    }
+    return null;
+  }
+
+  function createItemLevelRow(id, isPinned) {
+    var meta = getItemMeta(id);
+    if (!meta) return null;
+    var defLevel = (cfg && cfg.defaultLevel !== undefined) ? cfg.defaultLevel : 7;
+
+    if (meta.type === 'fixed') {
+      var target = meta.target;
+      return levelRow({
+        name: meta.name,
+        color: meta.color,
+        icon: meta.icon,
+        isPinned: isPinned,
+        onPinToggle: function () { togglePin(id); },
+        active: (state && state.fixed && state.fixed[target] !== undefined) ? state.fixed[target] : defLevel,
+        onSelect: function (s) {
+          Socket.send({ type: 'setFixedLevel', target: target, step: s });
+        }
+      });
+    }
+
+    if (meta.type === 'group') {
+      var g = meta.group;
+      var hasSubchannels = g.channels && g.channels.length > 1;
+      var chevron = hasSubchannels
+        ? '<span class="row-chevron"><i data-lucide="chevron-right"></i></span>'
+        : null;
+
+      return levelRow({
+        name: g.name,
+        color: g.color,
+        icon: meta.icon,
+        badge: chevron,
+        isPinned: isPinned,
+        onPinToggle: function () { togglePin(id); },
+        active: (state && state.groups && state.groups[g.id] !== undefined) ? state.groups[g.id] : defLevel,
+        onTitleClick: hasSubchannels ? function () {
+          currentGroup = g.id;
+          renderMix();
+        } : null,
+        onSelect: function (s) {
+          Socket.send({ type: 'setGroupLevel', group: g.id, step: s });
+        }
+      });
+    }
+
+    return null;
+  }
+
+  function renderReorderList() {
+    var c = getEffectiveChannelConfig();
+    var itemsEl = $('reorder-items');
+    if (!itemsEl) return;
+    itemsEl.innerHTML = '';
+
+    c.order.forEach(function (id, idx) {
+      var meta = getItemMeta(id);
+      if (!meta) return;
+
+      var isPinned = c.pinned.indexOf(id) !== -1;
+      var itemEl = document.createElement('div');
+      itemEl.className = 'reorder-item' + (isPinned ? ' reorder-item-pinned' : '');
+      itemEl.setAttribute('data-id', id);
+      itemEl.draggable = true;
+
+      var iconSvg = (window.Icons && typeof window.Icons.get === 'function')
+        ? window.Icons.get(meta.icon)
+        : '<i data-lucide="' + meta.icon + '"></i>';
+
+      var pinnedTag = isPinned ? '<span class="reorder-pinned-tag">FIXADO</span>' : '';
+
+      itemEl.innerHTML =
+        '<div class="reorder-item-left">' +
+          '<span class="reorder-drag-handle" title="Arraste para mover"><i data-lucide="grip-vertical"></i></span>' +
+          '<span class="icon-chip" style="background:' + meta.color + '22; color:' + meta.color + '; border:1px solid ' + meta.color + '55;">' +
+            iconSvg +
+          '</span>' +
+          '<span class="reorder-item-name">' + meta.name + '</span>' +
+          pinnedTag +
+        '</div>' +
+        '<div class="reorder-item-actions">' +
+          '<button type="button" class="reorder-action-btn reorder-pin-btn' + (isPinned ? ' reorder-pin-active' : '') + '" title="' + (isPinned ? 'Desafixar do topo' : 'Fixar no topo') + '">' +
+            '<i data-lucide="pin"></i>' +
+          '</button>' +
+          '<button type="button" class="reorder-action-btn reorder-up-btn" title="Subir" ' + (idx === 0 ? 'disabled' : '') + '>' +
+            '<i data-lucide="arrow-up"></i>' +
+          '</button>' +
+          '<button type="button" class="reorder-action-btn reorder-down-btn" title="Descer" ' + (idx === c.order.length - 1 ? 'disabled' : '') + '>' +
+            '<i data-lucide="arrow-down"></i>' +
+          '</button>' +
+        '</div>';
+
+      var pinBtn = itemEl.querySelector('.reorder-pin-btn');
+      pinBtn.onclick = function () {
+        togglePin(id);
+      };
+
+      var upBtn = itemEl.querySelector('.reorder-up-btn');
+      if (upBtn) {
+        upBtn.onclick = function () {
+          if (idx > 0) {
+            var newOrder = c.order.slice();
+            var tmp = newOrder[idx - 1];
+            newOrder[idx - 1] = newOrder[idx];
+            newOrder[idx] = tmp;
+            saveChannelPrefs({ order: newOrder, pinned: c.pinned });
+            renderReorderList();
+            renderMix();
+          }
+        };
+      }
+
+      var downBtn = itemEl.querySelector('.reorder-down-btn');
+      if (downBtn) {
+        downBtn.onclick = function () {
+          if (idx < c.order.length - 1) {
+            var newOrder = c.order.slice();
+            var tmp = newOrder[idx + 1];
+            newOrder[idx + 1] = newOrder[idx];
+            newOrder[idx] = tmp;
+            saveChannelPrefs({ order: newOrder, pinned: c.pinned });
+            renderReorderList();
+            renderMix();
+          }
+        };
+      }
+
+      // Drag and drop
+      itemEl.ondragstart = function (e) {
+        e.dataTransfer.setData('text/plain', id);
+        itemEl.classList.add('dragging');
+      };
+      itemEl.ondragend = function () {
+        itemEl.classList.remove('dragging');
+        var all = itemsEl.querySelectorAll('.reorder-item');
+        all.forEach(function (el) { el.classList.remove('drag-over'); });
+      };
+      itemEl.ondragover = function (e) {
+        e.preventDefault();
+        itemEl.classList.add('drag-over');
+      };
+      itemEl.ondragleave = function () {
+        itemEl.classList.remove('drag-over');
+      };
+      itemEl.ondrop = function (e) {
+        e.preventDefault();
+        itemEl.classList.remove('drag-over');
+        var draggedId = e.dataTransfer.getData('text/plain');
+        if (draggedId && draggedId !== id) {
+          var oldIdx = c.order.indexOf(draggedId);
+          var targetIdx = c.order.indexOf(id);
+          if (oldIdx !== -1 && targetIdx !== -1) {
+            var newOrder = c.order.slice();
+            newOrder.splice(oldIdx, 1);
+            newOrder.splice(targetIdx, 0, draggedId);
+            saveChannelPrefs({ order: newOrder, pinned: c.pinned });
+            renderReorderList();
+            renderMix();
+          }
+        }
+      };
+
+      itemsEl.appendChild(itemEl);
+    });
+
+    refreshIcons();
+  }
+
+  function openReorderModal() {
+    renderReorderList();
+    $('reorder-sheet').className = 'sheet on';
+    refreshIcons();
+  }
+
+  function closeReorderModal() {
+    $('reorder-sheet').className = 'sheet';
+    renderMix();
+  }
+
   function renderMix() {
-    // Top bar: identificação e status conectado logo na frente do nome
+    // 1. Cabeçalho ocupando apenas 1 linha compacta
     var instIcon = INSTRUMENT_ICONS[who.instrument] || 'music';
     var topIconSvg = (window.Icons && typeof window.Icons.get === 'function')
       ? window.Icons.get(instIcon)
       : '<i data-lucide="' + instIcon + '"></i>';
 
     $('who-icon').innerHTML = topIconSvg;
-    $('who-name').textContent = who.person + ' · ' + who.instrument;
-    var auxList = (cfg && Array.isArray(cfg.auxes) && cfg.auxes.length > 0) ? cfg.auxes : DEFAULT_AUXES;
-    var auxObj = auxList.find(function (a) { return a.id === who.aux; });
-    var auxCustomName = (auxObj && auxObj.name && auxObj.name.trim().toLowerCase() !== ('aux ' + who.aux)) ? (' · ' + auxObj.name) : '';
-    $('who-aux').textContent = 'Aux ' + who.aux + auxCustomName;
+    $('who-name').textContent = who.person || 'Músico';
+    $('who-aux').textContent = 'Aux ' + (who.aux || 1);
 
-    // Linhas fixas (Master, Clique, Talkback)
+    var chanCfg = getEffectiveChannelConfig();
+
+    // 3. Linhas fixadas no topo (somente canais escolhidos pelo usuário)
     var fixed = $('fixed');
     fixed.innerHTML = '';
-    [
-      ['master', 'Master', '#F5A524', 'volume-2'],
-      ['click', 'Clique', '#94A3B8', 'timer'],
-      ['talkback', 'Talkback', '#94A3B8', 'headset']
-    ].forEach(function (f) {
-      fixed.appendChild(levelRow({
-        name: f[1],
-        color: f[2],
-        icon: f[3],
-        active: (state.fixed && state.fixed[f[0]] !== undefined) ? state.fixed[f[0]] : 3,
-        onSelect: function (s) {
-          Socket.send({ type: 'setFixedLevel', target: f[0], step: s });
-        }
-      }));
-    });
+    window.CHM_MAX_STEP = (cfg && Array.isArray(cfg.levels)) ? Math.max.apply(null, cfg.levels.map(function (l) { return l.step; })) : 10;
+
+    if (chanCfg.pinned.length > 0) {
+      fixed.style.display = 'block';
+      var fixedHeader = document.createElement('div');
+      fixedHeader.className = 'fixed-section-title';
+      fixedHeader.innerHTML = '<i data-lucide="pin"></i><span>Fixados no topo</span>';
+      fixed.appendChild(fixedHeader);
+
+      chanCfg.pinned.forEach(function (id) {
+        var row = createItemLevelRow(id, true);
+        if (row) fixed.appendChild(row);
+      });
+    } else {
+      fixed.style.display = 'none';
+    }
 
     // Barra de navegação breadcrumb (só exibe quando dentro do agrupador)
     renderBreadcrumb();
@@ -308,42 +641,44 @@
     groupsEl.innerHTML = '';
 
     if (!currentGroup) {
-      // 1. Visão Geral: Bateria e grupos fechados sem texto explicativo
-      (cfg.groups || []).forEach(function (g) {
-        var gIcon = getGroupIcon(g);
-        var hasSubchannels = g.channels && g.channels.length > 1;
-        var chevron = hasSubchannels
-          ? '<span class="row-chevron"><i data-lucide="chevron-right"></i></span>'
-          : null;
+      // Barra superior com título Canais e botão Organizar
+      var bar = document.createElement('div');
+      bar.className = 'channels-header-bar';
+      bar.innerHTML =
+        '<span class="channels-header-title">Canais</span>' +
+        '<button type="button" class="channels-reorder-btn" id="open-reorder-btn">' +
+          '<i data-lucide="arrow-up-down"></i>' +
+          '<span>Organizar</span>' +
+        '</button>';
+      groupsEl.appendChild(bar);
 
-        var row = levelRow({
-          name: g.name,
-          color: g.color,
-          icon: gIcon,
-          badge: chevron,
-          active: (state.groups && state.groups[g.id] !== undefined) ? state.groups[g.id] : 3,
-          onTitleClick: hasSubchannels ? function () {
-            currentGroup = g.id;
-            renderMix();
-          } : null,
-          onSelect: function (s) {
-            Socket.send({ type: 'setGroupLevel', group: g.id, step: s });
-          }
-        });
-        groupsEl.appendChild(row);
+      var reorderBtn = $('open-reorder-btn');
+      if (reorderBtn) {
+        reorderBtn.onclick = function () {
+          openReorderModal();
+        };
+      }
+
+      // Renderiza canais na ordem personalizada (ou padrão: master, talk, click, instrumento, restante)
+      chanCfg.order.forEach(function (id) {
+        if (chanCfg.pinned.indexOf(id) === -1) {
+          var row = createItemLevelRow(id, false);
+          if (row) groupsEl.appendChild(row);
+        }
       });
     } else {
-      // 2. Agrupador aberto (ex: Bateria): Peças individuais com variações da cor do instrumento
+      // Agrupador aberto (ex: Bateria): Peças individuais com variações da cor do instrumento
       var group = (cfg.groups || []).find(function (g) { return g.id === currentGroup; });
       if (group) {
         var gIcon = getGroupIcon(group);
+        var defLevel = (cfg && cfg.defaultLevel !== undefined) ? cfg.defaultLevel : 7;
 
         // Volume geral do grupo
         var masterGroupRow = levelRow({
           name: group.name,
           color: group.color,
           icon: gIcon,
-          active: (state.groups && state.groups[group.id] !== undefined) ? state.groups[group.id] : 2,
+          active: (state && state.groups && state.groups[group.id] !== undefined) ? state.groups[group.id] : defLevel,
           onSelect: function (s) {
             Socket.send({ type: 'setGroupLevel', group: group.id, step: s });
           }
@@ -354,12 +689,12 @@
         var channels = group.channels || [];
         channels.forEach(function (ch, idx) {
           var chName = (cfg.channelNames && cfg.channelNames[ch]) ? cfg.channelNames[ch] : ('Canal ' + ch);
-          var pieceIcon = getPieceIcon(chName);
+          var customIcon = (cfg.channelIcons && cfg.channelIcons[ch]) ? cfg.channelIcons[ch] : null;
+          var pieceIcon = customIcon || getPieceIcon(chName);
           var pieceColor = getPieceColor(group, chName, idx);
-          // Regra 1: Volume da peça é independente do grupo (não cai de volta para o master)
-          var currentStep = (state.channels && state.channels[ch] !== undefined)
+          var currentStep = (state && state.channels && state.channels[ch] !== undefined)
             ? state.channels[ch]
-            : 2;
+            : defLevel;
 
           var pieceRow = levelRow({
             name: chName,
@@ -432,12 +767,12 @@
   Socket.on('mixer', function (m) {
     $('offline').className = m.connected ? 'warn' : 'warn on';
     $('dot').className = m.connected ? 'dot' : 'dot off';
-    $('dot').textContent = m.connected ? '● Conectado' : '● Sem mesa';
+    $('dot').title = m.connected ? 'Mesa conectada' : 'Sem mesa';
   });
   Socket.on('close', function () {
     $('offline').className = 'warn on';
     $('dot').className = 'dot off';
-    $('dot').textContent = '● Sem conexão';
+    $('dot').title = 'Sem conexão';
   });
   Socket.on('song', function (s) {
     $('song-name').textContent = s.name || 'Nenhuma música';
@@ -504,6 +839,24 @@
     }
   };
 
+  // Modal de organização de canais
+  $('reorder-reset-btn').onclick = function () {
+    var defOrder = getDefaultChannelOrder();
+    saveChannelPrefs({
+      order: defOrder,
+      pinned: []
+    });
+    renderReorderList();
+    renderMix();
+  };
+  $('reorder-done-btn').onclick = closeReorderModal;
+  $('reorder-close-btn').onclick = closeReorderModal;
+  $('reorder-sheet').onclick = function (e) {
+    if (e.target === $('reorder-sheet')) {
+      closeReorderModal();
+    }
+  };
+
   // Inicialização
   var x = new XMLHttpRequest();
   x.open('GET', '/api/config');
@@ -526,4 +879,22 @@
     }
   };
   x.send();
+
+  // Previne zoom por duplo toque no iPhone / iPad Safari
+  var lastTouchEnd = 0;
+  var lastTouchTarget = null;
+  document.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (e.target === lastTouchTarget && (now - lastTouchEnd) <= 300) {
+      e.preventDefault();
+      if (e.target && typeof e.target.click === 'function') {
+        e.target.click();
+      }
+    }
+    lastTouchEnd = now;
+    lastTouchTarget = e.target;
+  }, { passive: false });
+  document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+  });
 })();

@@ -6,9 +6,10 @@ const path = require('path');
 // Ícones usados no app do músico (index.html, app.js, levelRow). Adicione aqui quando usar um novo.
 const WANT = [
   'check', 'check-circle', 'chevron-left', 'chevron-right', 'circle-help', 'clock', 'drum',
-  'music-2', 'refresh-cw', 'user-plus', 'mic-vocal', 'guitar', 'guitar-electric', 'clef-bass',
+  'music-2', 'refresh-cw', 'user-plus', 'mic', 'mic-vocal', 'guitar', 'guitar-electric', 'clef-bass',
   'piano', 'music', 'disc-3', 'play', 'volume-x', 'headphones', 'mic-off', 'timer', 'hand',
-  'volume-2', 'headset', 'save', 'x',
+  'volume-2', 'headset', 'save', 'x', 'qr-code', 'pin', 'pin-off', 'arrow-up', 'arrow-down',
+  'arrow-up-down', 'grip-vertical', 'rotate-ccw',
 ];
 
 const { icons } = require('lucide');

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0E1116">
 <title>Can Hear Myself</title>
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
@@ -49,21 +49,21 @@
   <div class="top">
     <div class="who">
       <div class="who-main">
-        <div class="who-title-line">
-          <span id="who-icon" class="who-inst-icon"></span>
-          <span id="who-name" class="who-name"></span>
-          <span id="dot" class="dot">● Conectado</span>
-        </div>
-        <small id="who-aux" class="who-aux"></small>
+        <span id="who-icon" class="who-inst-icon"></span>
+        <span id="who-name" class="who-name"></span>
+        <span id="who-aux" class="who-aux"></span>
+        <span id="dot" class="dot" title="Conectado"></span>
       </div>
-      <button class="save-btn" id="save-mix-btn" title="Salvar minha mix para a próxima vez">
-        <i data-lucide="save"></i>
-        <span>Salvar</span>
-      </button>
-      <button class="help-btn" id="help-btn" title="Pedir ajuda ao técnico">
-        <i data-lucide="circle-help"></i>
-        <span>Ajuda</span>
-      </button>
+      <div class="who-actions">
+        <button class="save-btn" id="save-mix-btn" title="Salvar minha mix para a próxima vez">
+          <i data-lucide="save"></i>
+          <span>Salvar</span>
+        </button>
+        <button class="help-btn" id="help-btn" title="Pedir ajuda ao técnico">
+          <i data-lucide="circle-help"></i>
+          <span>Ajuda</span>
+        </button>
+      </div>
     </div>
 
     <div class="song">
@@ -88,6 +88,29 @@
     <h1>Precisa de ajuda?</h1>
     <div class="help-grid" id="reasons"></div>
     <button id="help-cancel" class="help-cancel-btn">Cancelar</button>
+  </div>
+</div>
+
+<div class="sheet" id="reorder-sheet">
+  <div class="box reorder-box">
+    <div class="reorder-header">
+      <h2>Organizar canais</h2>
+      <button class="sheet-close-btn" id="reorder-close-btn" type="button" title="Fechar">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <p class="reorder-hint">Fixe canais no topo (📌) ou altere a ordem dos canais.</p>
+    <div class="reorder-list" id="reorder-items"></div>
+    <div class="reorder-footer">
+      <button id="reorder-reset-btn" type="button" class="btn-secondary reorder-reset-btn">
+        <i data-lucide="rotate-ccw"></i>
+        <span>Padrão</span>
+      </button>
+      <button id="reorder-done-btn" type="button" class="btn-primary reorder-done-btn">
+        <i data-lucide="check"></i>
+        <span>Concluir</span>
+      </button>
+    </div>
   </div>
 </div>
 

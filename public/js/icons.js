@@ -80,6 +80,9 @@ var Icons = (function () {
         }
         return svg;
       }
+      if (window.lucide && typeof window.lucide.svg === 'function') {
+        return window.lucide.svg(name, cls);
+      }
       return '<i data-lucide="' + name + '"' + (cls ? ' class="' + cls + '"' : '') + '></i>';
     }
   };
