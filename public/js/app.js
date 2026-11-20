@@ -741,7 +741,7 @@
         var topBtn = $('help-btn');
         if (topBtn) {
           topBtn.className = 'help-btn pending';
-          topBtn.innerHTML = '<i data-lucide="clock"></i><span>Solicitada</span>';
+          topBtn.innerHTML = '<i data-lucide="clock"></i>';
           refreshIcons();
         }
       };
@@ -775,9 +775,18 @@
     $('dot').title = 'Sem conexão';
   });
   Socket.on('song', function (s) {
-    $('song-name').textContent = s.name || 'Nenhuma música';
-    $('song-meta').textContent = (s.key || '') + (s.bpm ? ' · ' + s.bpm + ' BPM' : '');
-    if (navigator.vibrate) navigator.vibrate(200);
+    var songBox = $('song-box');
+    var hasSong = s && s.name && s.name.trim() && s.name !== '-' && s.name.toLowerCase() !== 'nenhuma música';
+    if (hasSong) {
+      $('song-name').textContent = s.name;
+      $('song-meta').textContent = (s.key || '') + (s.bpm ? ' · ' + s.bpm + ' BPM' : '');
+      if (songBox) songBox.style.display = 'flex';
+      if (navigator.vibrate) navigator.vibrate(200);
+    } else {
+      if (songBox) songBox.style.display = 'none';
+      $('song-name').textContent = '';
+      $('song-meta').textContent = '';
+    }
   });
   Socket.on('helpUpdate', function (m) {
     var btn = $('help-btn');
@@ -785,14 +794,14 @@
       alert('Técnico a caminho.');
       if (btn) {
         btn.className = 'help-btn pending';
-        btn.innerHTML = '<i data-lucide="check-circle"></i><span>A caminho</span>';
+        btn.innerHTML = '<i data-lucide="check-circle"></i>';
         refreshIcons();
       }
     } else if (m.status === 'resolvido') {
       helpRequested = false;
       if (btn) {
         btn.className = 'help-btn';
-        btn.innerHTML = '<i data-lucide="circle-help"></i><span>Ajuda</span>';
+        btn.innerHTML = '<i data-lucide="circle-help"></i>';
         refreshIcons();
       }
     }
@@ -815,11 +824,11 @@
     var b = $('save-mix-btn');
     if (!b) return;
     b.className = 'save-btn saved';
-    b.innerHTML = '<i data-lucide="check"></i><span>Salvo</span>';
+    b.innerHTML = '<i data-lucide="check"></i>';
     refreshIcons();
     setTimeout(function () {
       b.className = 'save-btn';
-      b.innerHTML = '<i data-lucide="save"></i><span>Salvar</span>';
+      b.innerHTML = '<i data-lucide="save"></i>';
       refreshIcons();
     }, 2500);
   });
