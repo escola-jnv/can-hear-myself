@@ -57,6 +57,12 @@
       "audience": "[MÚSICO]",
       "category": "Correção de Bug",
       "text": "Desativado o zoom indesejado na tela do celular ao tocar repetidamente nos botões de controle em iPhones e aparelhos móveis."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO]",
+      "category": "Feature Melhora",
+      "text": "Cada canal agora ocupa apenas uma linha com botões de volume ao lado do nome e altura confortável para toque, com botão de organizar posicionado no topo."
     }
   ]
 }

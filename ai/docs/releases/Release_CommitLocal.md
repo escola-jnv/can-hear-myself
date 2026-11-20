@@ -31,6 +31,8 @@ Resumo do ciclo para o commit seguindo `ai/skills/release-github/SKILL.md`.
    - `public/index.html`
 7. `v0.2.2 [docs] chore: documenta abas do tecnico e exibicao do modelo/ip no changelog`
    - `docs/changelogs/0.2.2.json`, `ai/docs/releases/Release_CommitLocal.md`
+8. `v0.2.2 [musico] style: layout em linha unica por canal e botao organizar no topo`
+   - `public/css/app.css`, `public/index.html`, `public/js/app.js`, `public/js/ui/level-row.js`, `docs/changelogs/0.2.2.json`, `ai/docs/releases/Release_CommitLocal.md`
 
 ## Status da conferência pré-commit
 

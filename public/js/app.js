@@ -614,18 +614,13 @@
 
     var chanCfg = getEffectiveChannelConfig();
 
-    // 3. Linhas fixadas no topo (somente canais escolhidos pelo usuário)
+    // 3. Linhas fixadas no topo (somente canais escolhidos pelo usuário, sem texto)
     var fixed = $('fixed');
     fixed.innerHTML = '';
     window.CHM_MAX_STEP = (cfg && Array.isArray(cfg.levels)) ? Math.max.apply(null, cfg.levels.map(function (l) { return l.step; })) : 10;
 
     if (chanCfg.pinned.length > 0) {
       fixed.style.display = 'block';
-      var fixedHeader = document.createElement('div');
-      fixedHeader.className = 'fixed-section-title';
-      fixedHeader.innerHTML = '<i data-lucide="pin"></i><span>Fixados no topo</span>';
-      fixed.appendChild(fixedHeader);
-
       chanCfg.pinned.forEach(function (id) {
         var row = createItemLevelRow(id, true);
         if (row) fixed.appendChild(row);
@@ -641,24 +636,6 @@
     groupsEl.innerHTML = '';
 
     if (!currentGroup) {
-      // Barra superior com título Canais e botão Organizar
-      var bar = document.createElement('div');
-      bar.className = 'channels-header-bar';
-      bar.innerHTML =
-        '<span class="channels-header-title">Canais</span>' +
-        '<button type="button" class="channels-reorder-btn" id="open-reorder-btn">' +
-          '<i data-lucide="arrow-up-down"></i>' +
-          '<span>Organizar</span>' +
-        '</button>';
-      groupsEl.appendChild(bar);
-
-      var reorderBtn = $('open-reorder-btn');
-      if (reorderBtn) {
-        reorderBtn.onclick = function () {
-          openReorderModal();
-        };
-      }
-
       // Renderiza canais na ordem personalizada (ou padrão: master, talk, click, instrumento, restante)
       chanCfg.order.forEach(function (id) {
         if (chanCfg.pinned.indexOf(id) === -1) {
@@ -849,6 +826,10 @@
   };
 
   // Modal de organização de canais
+  var openReorderBtn = $('open-reorder-btn');
+  if (openReorderBtn) {
+    openReorderBtn.onclick = openReorderModal;
+  }
   $('reorder-reset-btn').onclick = function () {
     var defOrder = getDefaultChannelOrder();
     saveChannelPrefs({

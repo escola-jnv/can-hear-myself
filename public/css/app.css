@@ -226,6 +226,29 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
   flex-shrink: 0;
 }
 
+/* Botão Organizar canais no topo (ao lado de salvar) */
+.reorder-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-2);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.reorder-btn svg { width: 18px; height: 18px; }
+.reorder-btn:hover, .reorder-btn:active {
+  background: rgba(245, 165, 36, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Botão Salvar mix (apenas ícone com cor) */
 .save-btn {
   display: inline-flex;
@@ -361,88 +384,64 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
 }
 .bc-current svg { width: 16px; height: 16px; color: var(--accent); }
 
-/* Linhas de canais e passos de volume */
+/* Linhas de canais e passos de volume em 1 ÚNICA LINHA */
 .row {
   display: flex;
-  flex-direction: column;
-  padding: 10px 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
   border-bottom: 1px solid var(--border);
   gap: 8px;
+  min-height: 50px;
   transition: background 0.15s, border-color 0.15s;
 }
 .row.row-pinned {
-  border-color: rgba(245, 165, 36, 0.3);
-  background: rgba(245, 165, 36, 0.03);
+  border-color: rgba(245, 165, 36, 0.35);
+  background: rgba(245, 165, 36, 0.04);
 }
 .row .name {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  min-width: 90px;
+  max-width: 135px;
+  flex-shrink: 0;
 }
 .row .name.clickable {
   cursor: pointer;
-  border-radius: 8px;
-  padding: 4px 6px;
-  margin: -4px -6px;
+  border-radius: 6px;
+  padding: 3px 5px;
+  margin: -3px -5px;
   transition: background 0.15s;
 }
 .row .name.clickable:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .row-title-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
-  flex: 1;
-}
-
-/* Botão de fixar canal no topo */
-.pin-toggle-btn {
-  background: none;
-  border: none;
-  padding: 6px;
-  color: var(--text-2);
-  opacity: 0.35;
-  cursor: pointer;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.15s, color 0.15s, transform 0.1s;
-  flex-shrink: 0;
-}
-.pin-toggle-btn svg {
-  width: 16px;
-  height: 16px;
-}
-.pin-toggle-btn:hover, .pin-toggle-btn:active {
-  opacity: 0.85;
-  background: rgba(255, 255, 255, 0.06);
-}
-.pin-toggle-btn.pinned {
-  opacity: 1;
-  color: var(--accent);
+  width: 100%;
 }
 
 .icon-chip {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .icon-chip svg {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 .chip {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -450,53 +449,95 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
 .name-details {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
+
 .label-text {
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text);
 }
+
 .row-chevron {
   display: inline-flex;
   align-items: center;
   color: var(--text-2);
+  flex-shrink: 0;
 }
-.row-chevron svg { width: 15px; height: 15px; }
+.row-chevron svg { width: 13px; height: 13px; }
 
+/* Botão de fixar canal no topo */
+.pin-toggle-btn {
+  background: none;
+  border: none;
+  padding: 3px;
+  color: var(--text-2);
+  opacity: 0.3;
+  cursor: pointer;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.pin-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.pin-toggle-btn:hover, .pin-toggle-btn:active {
+  opacity: 0.85;
+  background: rgba(255, 255, 255, 0.08);
+}
+.pin-toggle-btn.pinned {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Passos de volume (botões numéricos de 0 a 10) */
 .steps {
   display: flex;
-  gap: 4px;
-  width: 100%;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
   justify-content: space-between;
+  align-items: center;
 }
 .steps button {
   flex: 1;
   min-width: 0;
-  height: 38px;
-  border-radius: 8px;
+  height: 42px; /* Altura com bastante folga para toque seguro */
+  border-radius: 7px;
   padding: 0;
   color: var(--text-2);
   background: var(--surface);
   border: 1.5px solid var(--border);
-  font-weight: 600;
-  font-size: 13.5px;
+  font-weight: 700;
+  font-size: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
+  transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.05s;
+}
+.steps button:active {
+  transform: scale(0.95);
 }
 .steps button.on {
   color: #0E1116;
   border-color: transparent;
-  font-weight: 700;
+  font-weight: 800;
 }
 .steps button.step-0 {
-  font-size: 13px;
+  font-size: 12px;
   opacity: 0.85;
 }
 .steps button.step-0.on {
@@ -508,9 +549,9 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
 /* Peças individuais com variações da cor do instrumento */
 .piece-row {
   background: rgba(255, 255, 255, 0.02);
-  padding: 10px 8px;
+  padding: 5px 6px;
   border-radius: 8px;
-  margin: 4px 0;
+  margin: 3px 0;
   border-bottom: none;
 }
 .piece-row:hover {
@@ -619,67 +660,11 @@ h1 { font-size: 22px; font-weight: 600; margin-bottom: 16px; }
   font-weight: 500;
   text-align: center;
 }
-/* Container de canais fixados no topo */
+/* Container de canais fixados no topo (sem texto) */
 #fixed {
   display: none;
-  margin-top: 6px;
-  padding-top: 6px;
+  margin-top: 4px;
   border-top: 1px solid var(--border);
-}
-.fixed-section-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--accent);
-  padding: 4px 0 2px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.fixed-section-title svg {
-  width: 12px;
-  height: 12px;
-}
-
-/* Barra superior dos canais com botão de organizar */
-.channels-header-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 0 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-.channels-header-title {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-2);
-}
-.channels-reorder-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.channels-reorder-btn:hover, .channels-reorder-btn:active {
-  background: rgba(245, 165, 36, 0.12);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.channels-reorder-btn svg {
-  width: 14px;
-  height: 14px;
 }
 
 /* Modal de Organizar Canais */

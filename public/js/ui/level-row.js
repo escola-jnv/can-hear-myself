@@ -38,7 +38,7 @@ function levelRow(opts) {
     '</button>';
   }
 
-  nameCol.innerHTML = '<div class="row-title-wrap">' + iconHtml + '<div class="name-details">' + labelHtml + badgeHtml + '</div></div>' + pinHtml;
+  nameCol.innerHTML = '<div class="row-title-wrap">' + iconHtml + '<div class="name-details">' + labelHtml + badgeHtml + '</div>' + pinHtml + '</div>';
 
   if (opts.onPinToggle) {
     var pinBtn = nameCol.querySelector('.pin-toggle-btn');
