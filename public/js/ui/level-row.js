@@ -27,28 +27,7 @@ function levelRow(opts) {
   var labelHtml = '<span class="label-text">' + opts.name + '</span>';
   var badgeHtml = opts.badge ? '<span class="row-badge">' + opts.badge + '</span>' : '';
 
-  var pinHtml = '';
-  if (opts.onPinToggle) {
-    var pinSvg = (window.Icons && typeof window.Icons.get === 'function')
-      ? window.Icons.get('pin', 'pin-icon')
-      : '<i data-lucide="pin"></i>';
-
-    pinHtml = '<button type="button" class="pin-toggle-btn' + (opts.isPinned ? ' pinned' : '') + '" title="' + (opts.isPinned ? 'Desafixar do topo' : 'Fixar no topo') + '">' +
-      pinSvg +
-    '</button>';
-  }
-
-  nameCol.innerHTML = '<div class="row-title-wrap">' + iconHtml + '<div class="name-details">' + labelHtml + badgeHtml + '</div>' + pinHtml + '</div>';
-
-  if (opts.onPinToggle) {
-    var pinBtn = nameCol.querySelector('.pin-toggle-btn');
-    if (pinBtn) {
-      pinBtn.onclick = function (e) {
-        e.stopPropagation();
-        opts.onPinToggle();
-      };
-    }
-  }
+  nameCol.innerHTML = '<div class="row-title-wrap">' + iconHtml + '<div class="name-details">' + labelHtml + badgeHtml + '</div></div>';
 
   var steps = document.createElement('div');
   steps.className = 'steps';

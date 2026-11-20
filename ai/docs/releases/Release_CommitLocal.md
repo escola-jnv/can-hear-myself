@@ -33,6 +33,10 @@ Resumo do ciclo para o commit seguindo `ai/skills/release-github/SKILL.md`.
    - `docs/changelogs/0.2.2.json`, `ai/docs/releases/Release_CommitLocal.md`
 8. `v0.2.2 [musico] style: layout em linha unica por canal e botao organizar no topo`
    - `public/css/app.css`, `public/index.html`, `public/js/app.js`, `public/js/ui/level-row.js`, `docs/changelogs/0.2.2.json`, `ai/docs/releases/Release_CommitLocal.md`
+9. `v0.2.2 [mix] fix: independiza volume geral do grupo e pecas individuais sem sobreposicao`
+   - `server/core/mix.js`, `tests/core/mix.test.js`
+10. `v0.2.2 [musico] style: altura minima confortavel para clique, ocupacao de 100% da tela e remocao do pino na linha`
+   - `public/css/app.css`, `public/index.html`, `public/js/app.js`, `public/js/ui/level-row.js`, `docs/changelogs/0.2.2.json`, `ai/docs/releases/Release_CommitLocal.md`
 
 ## Status da conferência pré-commit
 

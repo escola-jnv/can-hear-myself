@@ -94,22 +94,16 @@
 
 <div class="sheet" id="reorder-sheet">
   <div class="box reorder-box">
-    <div class="reorder-header">
-      <h2>Organizar canais</h2>
-      <button class="sheet-close-btn" id="reorder-close-btn" type="button" title="Fechar">
-        <i data-lucide="x"></i>
-      </button>
-    </div>
-    <p class="reorder-hint">Fixe canais no topo (📌) ou altere a ordem dos canais.</p>
     <div class="reorder-list" id="reorder-items"></div>
     <div class="reorder-footer">
-      <button id="reorder-reset-btn" type="button" class="btn-secondary reorder-reset-btn">
+      <button id="reorder-reset-btn" type="button" class="reorder-footer-btn reorder-btn-reset" title="Padrão" aria-label="Padrão">
         <i data-lucide="rotate-ccw"></i>
-        <span>Padrão</span>
       </button>
-      <button id="reorder-done-btn" type="button" class="btn-primary reorder-done-btn">
+      <button id="reorder-cancel-btn" type="button" class="reorder-footer-btn reorder-btn-cancel" title="Cancelar" aria-label="Cancelar">
+        <i data-lucide="x"></i>
+      </button>
+      <button id="reorder-save-btn" type="button" class="reorder-footer-btn reorder-btn-save" title="Salvar" aria-label="Salvar">
         <i data-lucide="check"></i>
-        <span>Concluir</span>
       </button>
     </div>
   </div>

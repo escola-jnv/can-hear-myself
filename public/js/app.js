@@ -435,7 +435,6 @@
         color: meta.color,
         icon: meta.icon,
         isPinned: isPinned,
-        onPinToggle: function () { togglePin(id); },
         active: (state && state.fixed && state.fixed[target] !== undefined) ? state.fixed[target] : defLevel,
         onSelect: function (s) {
           Socket.send({ type: 'setFixedLevel', target: target, step: s });
@@ -456,7 +455,6 @@
         icon: meta.icon,
         badge: chevron,
         isPinned: isPinned,
-        onPinToggle: function () { togglePin(id); },
         active: (state && state.groups && state.groups[g.id] !== undefined) ? state.groups[g.id] : defLevel,
         onTitleClick: hasSubchannels ? function () {
           currentGroup = g.id;
@@ -471,8 +469,17 @@
     return null;
   }
 
+  var reorderDraft = null;
+
   function renderReorderList() {
-    var c = getEffectiveChannelConfig();
+    if (!reorderDraft) {
+      var eff = getEffectiveChannelConfig();
+      reorderDraft = {
+        order: eff.order.slice(),
+        pinned: eff.pinned.slice()
+      };
+    }
+    var c = reorderDraft;
     var itemsEl = $('reorder-items');
     if (!itemsEl) return;
     itemsEl.innerHTML = '';
@@ -516,20 +523,27 @@
 
       var pinBtn = itemEl.querySelector('.reorder-pin-btn');
       pinBtn.onclick = function () {
-        togglePin(id);
+        var p = reorderDraft.pinned.slice();
+        var pIdx = p.indexOf(id);
+        if (pIdx !== -1) {
+          p.splice(pIdx, 1);
+        } else {
+          p.push(id);
+        }
+        reorderDraft.pinned = p;
+        renderReorderList();
       };
 
       var upBtn = itemEl.querySelector('.reorder-up-btn');
       if (upBtn) {
         upBtn.onclick = function () {
           if (idx > 0) {
-            var newOrder = c.order.slice();
+            var newOrder = reorderDraft.order.slice();
             var tmp = newOrder[idx - 1];
             newOrder[idx - 1] = newOrder[idx];
             newOrder[idx] = tmp;
-            saveChannelPrefs({ order: newOrder, pinned: c.pinned });
+            reorderDraft.order = newOrder;
             renderReorderList();
-            renderMix();
           }
         };
       }
@@ -537,14 +551,13 @@
       var downBtn = itemEl.querySelector('.reorder-down-btn');
       if (downBtn) {
         downBtn.onclick = function () {
-          if (idx < c.order.length - 1) {
-            var newOrder = c.order.slice();
+          if (idx < reorderDraft.order.length - 1) {
+            var newOrder = reorderDraft.order.slice();
             var tmp = newOrder[idx + 1];
             newOrder[idx + 1] = newOrder[idx];
             newOrder[idx] = tmp;
-            saveChannelPrefs({ order: newOrder, pinned: c.pinned });
+            reorderDraft.order = newOrder;
             renderReorderList();
-            renderMix();
           }
         };
       }
@@ -571,15 +584,14 @@
         itemEl.classList.remove('drag-over');
         var draggedId = e.dataTransfer.getData('text/plain');
         if (draggedId && draggedId !== id) {
-          var oldIdx = c.order.indexOf(draggedId);
-          var targetIdx = c.order.indexOf(id);
+          var oldIdx = reorderDraft.order.indexOf(draggedId);
+          var targetIdx = reorderDraft.order.indexOf(id);
           if (oldIdx !== -1 && targetIdx !== -1) {
-            var newOrder = c.order.slice();
+            var newOrder = reorderDraft.order.slice();
             newOrder.splice(oldIdx, 1);
             newOrder.splice(targetIdx, 0, draggedId);
-            saveChannelPrefs({ order: newOrder, pinned: c.pinned });
+            reorderDraft.order = newOrder;
             renderReorderList();
-            renderMix();
           }
         }
       };
@@ -591,14 +603,44 @@
   }
 
   function openReorderModal() {
+    var c = getEffectiveChannelConfig();
+    reorderDraft = {
+      order: c.order.slice(),
+      pinned: c.pinned.slice()
+    };
     renderReorderList();
     $('reorder-sheet').className = 'sheet on';
     refreshIcons();
   }
 
-  function closeReorderModal() {
+  function cancelReorderModal() {
+    reorderDraft = null;
+    $('reorder-sheet').className = 'sheet';
+  }
+
+  function saveReorderModal() {
+    if (reorderDraft) {
+      saveChannelPrefs({
+        order: reorderDraft.order,
+        pinned: reorderDraft.pinned
+      });
+    }
+    reorderDraft = null;
     $('reorder-sheet').className = 'sheet';
     renderMix();
+  }
+
+  function resetReorderModal() {
+    var defOrder = getDefaultChannelOrder();
+    reorderDraft = {
+      order: defOrder.slice(),
+      pinned: []
+    };
+    renderReorderList();
+  }
+
+  function closeReorderModal() {
+    cancelReorderModal();
   }
 
   function renderMix() {
@@ -830,22 +872,34 @@
   if (openReorderBtn) {
     openReorderBtn.onclick = openReorderModal;
   }
-  $('reorder-reset-btn').onclick = function () {
-    var defOrder = getDefaultChannelOrder();
-    saveChannelPrefs({
-      order: defOrder,
-      pinned: []
-    });
-    renderReorderList();
-    renderMix();
-  };
-  $('reorder-done-btn').onclick = closeReorderModal;
-  $('reorder-close-btn').onclick = closeReorderModal;
-  $('reorder-sheet').onclick = function (e) {
-    if (e.target === $('reorder-sheet')) {
-      closeReorderModal();
+  if ($('reorder-reset-btn')) {
+    $('reorder-reset-btn').onclick = resetReorderModal;
+  }
+  if ($('reorder-cancel-btn')) {
+    $('reorder-cancel-btn').onclick = cancelReorderModal;
+  }
+  if ($('reorder-save-btn')) {
+    $('reorder-save-btn').onclick = saveReorderModal;
+  }
+  if ($('reorder-done-btn')) {
+    $('reorder-done-btn').onclick = saveReorderModal;
+  }
+  if ($('reorder-close-btn')) {
+    $('reorder-close-btn').onclick = cancelReorderModal;
+  }
+  if ($('reorder-sheet')) {
+    $('reorder-sheet').onclick = function (e) {
+      if (e.target === $('reorder-sheet')) {
+        cancelReorderModal();
+      }
+    };
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('reorder-sheet') && $('reorder-sheet').classList.contains('on')) {
+      cancelReorderModal();
     }
-  };
+  });
 
   // Inicialização
   var x = new XMLHttpRequest();

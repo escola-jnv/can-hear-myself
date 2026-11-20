@@ -63,6 +63,30 @@
       "audience": "[MÚSICO]",
       "category": "Feature Melhora",
       "text": "Cada canal agora ocupa apenas uma linha com botões de volume ao lado do nome e altura confortável para toque, com botão de organizar posicionado no topo."
+    },
+    {
+      "area": "Mesa de Som",
+      "audience": "[MÚSICO]",
+      "category": "Feature Melhora",
+      "text": "O ajuste de volume geral de um grupo (como bateria) e o ajuste das peças individuais agora são totalmente independentes, sem alterar os níveis um do outro."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO]",
+      "category": "Feature Melhora",
+      "text": "Janela de organização de canais otimizada com mais espaço vertical e 3 botões rápidos em cores distintas: Padrão, Cancelar e Salvar."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO]",
+      "category": "Feature Melhora",
+      "text": "Altura mínima confortável de 48px nos botões de volume seguindo padrões ergonômicos de toque e ocupação de 100% da altura da tela do celular."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO]",
+      "category": "Feature Melhora",
+      "text": "Remoção do ícone de fixar na linha dos canais para liberar espaço para o nome do instrumento, mantendo a fixação disponível exclusivamente na tela de organizar canais."
     }
   ]
 }
