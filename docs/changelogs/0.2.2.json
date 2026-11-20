@@ -3,11 +3,25 @@
   "name": "Palco Afinado",
   "date": "2026-11-19",
   "highlights": [
+    "Painel do Técnico organizado em abas dedicadas para Músicas e Conexão da Mesa",
+    "Exibição do modelo e IP da mesa de som no cabeçalho do Painel do Técnico",
     "QR Code no Painel do Técnico para conexão rápida dos músicos",
     "Escala de volume expandida para 0 a 10 com proporção sonora precisa",
     "Correção no fader master do fone para mesas Soundcraft Ui24R"
   ],
   "items": [
+    {
+      "area": "Painel do Técnico",
+      "audience": "[TÉCNICO]",
+      "category": "Feature Melhora",
+      "text": "Organização do painel em abas dedicadas para o repertório de músicas e para o gerenciamento da conexão com a mesa de som."
+    },
+    {
+      "area": "Painel do Técnico",
+      "audience": "[TÉCNICO]",
+      "category": "Feature Melhora",
+      "text": "Exibição do modelo e endereço IP da mesa de som conectada no topo do painel, com atalho direto para a aba de conexão."
+    },
     {
       "area": "Painel do Técnico",
       "audience": "[TÉCNICO]",
@@ -25,6 +39,12 @@
       "audience": "[MÚSICO & TÉCNICO]",
       "category": "Feature Melhora",
       "text": "Escala de volume ampliada de 0 a 10 (nível 0 mudo, nível 1 em -30 dB até nível 10 em +10 dB), oferecendo ajuste mais gradual e preciso para o retorno."
+    },
+    {
+      "area": "App do Músico",
+      "audience": "[MÚSICO]",
+      "category": "Feature Melhora",
+      "text": "A barra de música no topo do celular é ocultada automaticamente quando nenhuma música estiver tocando, liberando mais espaço para os canais."
     },
     {
       "area": "Mesa de Som",
