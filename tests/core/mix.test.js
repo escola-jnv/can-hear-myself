@@ -49,10 +49,25 @@ test('ao mudar o master do grupo, NÃO influencia o volume de cada peça', async
   assert.strictEqual(mix.auxState(3).channels[13], 8);
   assert.strictEqual(mix.auxState(3).channels[14], 6);
 
-  // Muda o master do grupo para o nível padrão
-  await mix.setGroupLevel(3, 'bateria', 7);
+  // Muda o master do grupo para vários níveis diferentes (menor, mudo, maior)
+  await mix.setGroupLevel(3, 'bateria', 4);
+  assert.strictEqual(mix.auxState(3).channels[13], 8);
+  assert.strictEqual(mix.auxState(3).channels[14], 6);
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 4);
 
-  // Volumes de cada peça continuam inalterados
+  await mix.setGroupLevel(3, 'bateria', 0); // Mudo geral do grupo
+  assert.strictEqual(mix.auxState(3).channels[13], 8);
+  assert.strictEqual(mix.auxState(3).channels[14], 6);
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 0);
+  assert.strictEqual(d.sends['3:13'], null);
+  assert.strictEqual(d.sends['3:14'], null);
+
+  await mix.setGroupLevel(3, 'bateria', 9);
+  assert.strictEqual(mix.auxState(3).channels[13], 8);
+  assert.strictEqual(mix.auxState(3).channels[14], 6);
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 9);
+
+  await mix.setGroupLevel(3, 'bateria', 7);
   assert.strictEqual(mix.auxState(3).channels[13], 8);
   assert.strictEqual(mix.auxState(3).channels[14], 6);
   assert.strictEqual(mix.auxState(3).groups['bateria'], 7);
@@ -64,10 +79,17 @@ test('ao mudar o volume da peça, NÃO influencia o volume do master', async () 
   await mix.setGroupLevel(3, 'bateria', 7);
   assert.strictEqual(mix.auxState(3).groups['bateria'], 7);
 
-  // Muda o volume de uma peça
+  // Muda o volume de múltiplas peças
   await mix.setChannelLevel(3, 14, 10); // Caixa = 10
-
-  // Master do grupo continua inalterado em 7
   assert.strictEqual(mix.auxState(3).groups['bateria'], 7);
   assert.strictEqual(mix.auxState(3).channels[14], 10);
+
+  await mix.setChannelLevel(3, 13, 10); // Kick = 10
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 7);
+  assert.strictEqual(mix.auxState(3).channels[13], 10);
+
+  await mix.setChannelLevel(3, 15, 0); // Snare FX = 0
+  assert.strictEqual(mix.auxState(3).groups['bateria'], 7);
+  assert.strictEqual(mix.auxState(3).channels[15], 0);
 });
+

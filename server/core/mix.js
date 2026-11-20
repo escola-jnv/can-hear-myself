@@ -123,7 +123,6 @@ class Mix {
       }
       st.groups[groupId] = 0;
       for (const ch of channels) {
-        st.channels[ch] = 0;
         await this.driver.setAuxSend(aux, ch, null);
       }
       return { ok: true, group: groupId, step: 0 };
@@ -168,7 +167,6 @@ class Mix {
 
     st.groups[groupId] = step;
     for (const t of targets) {
-      st.channels[t.ch] = newLevels[t.ch];
       const db = t.db === null ? null : Math.min(t.db, max);
       await this.driver.setAuxSend(aux, t.ch, db);
     }
@@ -180,19 +178,6 @@ class Mix {
     const st = this.auxState(aux);
     if (!st.channels) st.channels = {};
     st.channels[channel] = step;
-
-    // Recalcular o nível geral do grupo baseado na soma/média das peças
-    const group = this.config.groups.find((g) => g.channels.includes(channel));
-    if (group && group.channels && group.channels.length > 0) {
-      let sum = 0;
-      const def = this.getDefaultLevel();
-      for (const ch of group.channels) {
-        const s = st.channels[ch] !== undefined ? st.channels[ch] : (st.groups[group.id] ?? def);
-        sum += s;
-      }
-      const avg = sum / group.channels.length;
-      st.groups[group.id] = Math.max(0, Math.min(this.getMaxStep(), Math.round(avg)));
-    }
 
     const finalDb = chDb === null ? null : Math.min(this.channelDb(chDb, st.offsets[channel]), this.config.maxDb);
     await this.driver.setAuxSend(aux, channel, finalDb);
